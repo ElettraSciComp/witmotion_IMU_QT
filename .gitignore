@@ -19,4 +19,4 @@
 .catkin_*
 .idea
 __pycache__
-
+.cmake/
