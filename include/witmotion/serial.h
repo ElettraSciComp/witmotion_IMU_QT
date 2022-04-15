@@ -28,17 +28,7 @@ protected:
     {
         rsUnknown,
         rsClear,
-        rsRTC,
-        rsAcceleration,
-        rsAngularVelocity,
-        rsAngles,
-        rsMagnetometer,
-        rsDataPortStatus,
-        rsAltimeter,
-        rsGPSCoordinates,
-        rsGPSGroundSpeed,
-        rsOrientation,
-        rsGPSAccuracy
+        rsRead
     }read_state;
     witmotion_typed_packets packets;
     witmotion_typed_bytecounts counts;

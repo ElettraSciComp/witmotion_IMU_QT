@@ -23,14 +23,42 @@ public:
 
 bool id_registered(const size_t id);
 
-inline float decode_acceleration(const int16_t* value);
-inline float decode_angular_velocity(const int16_t* value, bool to_rad = true);
-inline float decode_angle(const int16_t* value, bool to_rad = true);
-inline float decode_temperature(const int16_t* value);
-inline float decode(const witmotion_packet_id type, const int16_t* value, bool to_rad = true);
-inline float decode(const uint8_t type, const int16_t* value, bool to_rad = true);
-bool decode(const witmotion_datapacket* packet, float& X_val, float& Y_val, float& Z_val, float& T_val, bool to_rad = true);
-inline void decode(const int16_t* data, const uint8_t type, float& X_val, float& Y_val, float& Z_val, float& T_val, bool to_rad = true);
+/* COMPONENT DECODERS */
+float decode_acceleration(const int16_t* value);
+float decode_angular_velocity(const int16_t* value);
+float decode_angle(const int16_t* value);
+float decode_temperature(const int16_t* value);
+float decode_orientation(const int16_t* value);
 
+/* PACKET DECODERS */
+void decode_accelerations(const witmotion_datapacket& packet,
+                          float& x,
+                          float& y,
+                          float& z,
+                          float& t);
+void decode_angular_velocities(const witmotion_datapacket& packet,
+                               float& x,
+                               float& y,
+                               float& z,
+                               float& t);
+void decode_angles(const witmotion_datapacket& packet,
+                   float& roll,
+                   float& pitch,
+                   float& yaw,
+                   float& t);
+void decode_magnetometer(const witmotion_datapacket& packet,
+                         float& x,
+                         float& y,
+                         float& z,
+                         float& t);
+void decode_gps(const witmotion_datapacket& packet,
+                double& longitude_deg,
+                double& longitude_min,
+                double& latitude_deg,
+                double& latitude_min);
+void decode_gps_ground_speed(const witmotion_datapacket& packet,
+                             float altitude,
+                             float angular_velocity,
+                             double ground_speed);
 }
 #endif

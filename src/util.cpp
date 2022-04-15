@@ -10,69 +10,6 @@ bool id_registered(const size_t id)
     return (witmotion_registered_ids.find(id) != witmotion_registered_ids.end());
 }
 
-
-inline float decode_acceleration(const int16_t* value)
-{
-    return static_cast<float>(*value) / 32768.f * 16.f * 9.81;
-}
-
-inline float decode_angular_velocity(const int16_t* value, bool to_rad)
-{
-    return (static_cast<float>(*value) / 32768.f * 2000.f) * (to_rad ? (M_PI / 180.f) : 1.f);
-}
-
-inline float decode_angle(const int16_t* value, bool to_rad)
-{
-    return (static_cast<float>(*value) / 32768.f * 180.f) * (to_rad ? (M_PI / 180.f) : 1.f);
-}
-
-inline float decode_temperature(const int16_t* value)
-{
-    return static_cast<float>(*value) / 340.f;
-}
-
-inline float decode(const witmotion_packet_id type, const int16_t* value, bool to_rad)
-{
-    switch(type)
-    {
-    case pidAcceleration:
-        return decode_acceleration(value);
-    case pidAngularVelocity:
-        return decode_angular_velocity(value, to_rad);
-    case pidAngles:
-        return decode_angle(value, to_rad);
-    }
-}
-
-inline float decode(const uint8_t type, const int16_t* value, bool to_rad)
-{
-    return decode(static_cast<witmotion_packet_id>(type), value, to_rad);
-}
-
-bool decode(const witmotion_datapacket* packet, float& X_val, float& Y_val, float& Z_val, float& T_val, bool to_rad)
-{
-    if(packet->header_byte != WITMOTION_HEADER_BYTE)
-        return false;
-    uint8_t crc = packet->header_byte + packet->id_byte;
-    bool valid;
-    for(uint8_t i = 0; i < 8; i++)
-        crc += packet->datastore.raw[i];
-    valid = (crc == packet->crc);
-    X_val = decode(packet->id_byte, packet->datastore.raw_cells, to_rad);
-    Y_val = decode(packet->id_byte, packet->datastore.raw_cells + 1, to_rad);
-    Z_val = decode(packet->id_byte, packet->datastore.raw_cells + 2, to_rad);
-    T_val = decode_temperature(packet->datastore.raw_cells + 3);
-    return valid;
-}
-
-inline void decode(const int16_t* data, const uint8_t type, float& X_val, float& Y_val, float& Z_val, float& T_val, bool to_rad)
-{
-    X_val = decode(type, data, to_rad);
-    Y_val = decode(type, data + 1, to_rad);
-    Z_val = decode(type, data + 2, to_rad);
-    T_val = decode_temperature(data + 3);
-}
-
 witmotion_datapacket& witmotion_typed_packets::operator[](const witmotion_packet_id id)
 {
     size_t int_id = static_cast<size_t>(id) - 0x50;
@@ -83,6 +20,112 @@ size_t& witmotion_typed_bytecounts::operator[](const witmotion_packet_id id)
 {
     size_t int_id = static_cast<size_t>(id) - 0x50;
     return array[int_id];
+}
+
+/* COMPONENT DECODERS */
+float decode_acceleration(const int16_t* value)
+{
+    return static_cast<float>(*value) / 32768.f * 16.f * 9.81;
+}
+
+float decode_angular_velocity(const int16_t* value)
+{
+    return (static_cast<float>(*value) / 32768.f * 2000.f);
+}
+
+float decode_angle(const int16_t* value)
+{
+    return (static_cast<float>(*value) / 32768.f * 180.f);
+}
+
+float decode_temperature(const int16_t* value)
+{
+    return static_cast<float>(*value) / 340.f;
+}
+
+float decode_orientation(const int16_t *value)
+{
+    return static_cast<float>(*value) / 32768.f;
+}
+
+/* PACKET DECODERS */
+void decode_accelerations(const witmotion_datapacket &packet,
+                          float &x,
+                          float &y,
+                          float &z,
+                          float &t)
+{
+    if(static_cast<witmotion_packet_id>(packet.id_byte) != pidAcceleration)
+        return;
+    x = decode_acceleration(packet.datastore.raw_cells);
+    y = decode_acceleration(packet.datastore.raw_cells + 1);
+    z = decode_acceleration(packet.datastore.raw_cells + 2);
+    t = decode_temperature(packet.datastore.raw_cells + 3);
+}
+
+void decode_angular_velocities(const witmotion_datapacket &packet,
+                               float &x,
+                               float &y,
+                               float &z,
+                               float &t)
+{
+    if(static_cast<witmotion_packet_id>(packet.id_byte) != pidAngularVelocity)
+        return;
+    x = decode_angular_velocity(packet.datastore.raw_cells);
+    y = decode_angular_velocity(packet.datastore.raw_cells + 1);
+    z = decode_angular_velocity(packet.datastore.raw_cells + 2);
+    t = decode_temperature(packet.datastore.raw_cells + 3);
+}
+
+void decode_angles(const witmotion_datapacket &packet,
+                   float &roll,
+                   float &pitch,
+                   float &yaw,
+                   float &t)
+{
+    if(static_cast<witmotion_packet_id>(packet.id_byte) != pidAngles)
+        return;
+    roll = decode_angle(packet.datastore.raw_cells);
+    pitch = decode_angle(packet.datastore.raw_cells + 1);
+    yaw = decode_angle(packet.datastore.raw_cells + 2);
+    t = decode_temperature(packet.datastore.raw_cells + 3);
+}
+
+void decode_magnetometer(const witmotion_datapacket &packet,
+                         float &x,
+                         float &y,
+                         float &z,
+                         float &t)
+{
+    if(static_cast<witmotion_packet_id>(packet.id_byte) != pidMagnetometer)
+        return;
+    x = static_cast<float>(packet.datastore.raw_cells[0]);
+    y = static_cast<float>(packet.datastore.raw_cells[1]);
+    z = static_cast<float>(packet.datastore.raw_cells[2]);
+    t = decode_temperature(packet.datastore.raw_cells + 3);
+}
+
+void decode_gps(const witmotion_datapacket &packet,
+                double &longitude_deg,
+                double &longitude_min,
+                double &latitude_deg,
+                double &latitude_min)
+{
+    if(static_cast<witmotion_packet_id>(packet.id_byte) != pidGPSCoordinates)
+        return;
+    longitude_deg = static_cast<double>(packet.datastore.raw_large[0]) / 100000000.f;
+    longitude_min = static_cast<double>(packet.datastore.raw_large[0] % 10000000) / 100000.f;
+    latitude_deg = static_cast<double>(packet.datastore.raw_large[1]) / 100000000.f;
+    latitude_min = static_cast<double>(packet.datastore.raw_large[1] % 10000000) / 100000.f;
+}
+
+void decode_gps_ground_speed(const witmotion_datapacket &packet,
+                             float altitude,
+                             float angular_velocity,
+                             double ground_speed)
+{
+    if(static_cast<witmotion_packet_id>(packet.id_byte) != pidGPSGroundSpeed)
+        return;
 }
 
 }

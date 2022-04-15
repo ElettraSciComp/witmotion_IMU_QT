@@ -36,42 +36,7 @@ void QBaseSerialWitmotionSensorReader::ReadData()
                     counts[read_cell] = 0;
                     packets[read_cell].header_byte = WITMOTION_HEADER_BYTE;
                     packets[read_cell].id_byte = read_cell;
-                    switch(read_cell)
-                    {
-                    case pidRTC:
-                        read_state = rsRTC;
-                        break;
-                    case pidAcceleration:
-                        read_state = rsAcceleration;
-                        break;
-                    case pidAngularVelocity:
-                        read_state = rsAngularVelocity;
-                        break;
-                    case pidAngles:
-                        read_state = rsAngles;
-                        break;
-                    case pidMagnetometer:
-                        read_state = rsMagnetometer;
-                        break;
-                    case pidDataPortStatus:
-                        read_state = rsDataPortStatus;
-                        break;
-                    case pidAltimeter:
-                        read_state = rsAltimeter;
-                        break;
-                    case pidGPSCoordinates:
-                        read_state = rsGPSCoordinates;
-                        break;
-                    case pidGPSGroundSpeed:
-                        read_state = rsGPSGroundSpeed;
-                        break;
-                    case pidOrientation:
-                        read_state = rsOrientation;
-                        break;
-                    case pidGPSAccuracy:
-                        read_state = rsGPSAccuracy;
-                        break;
-                    }
+                    read_state = rsRead;
                 }
                 else
                     read_state = rsClear;

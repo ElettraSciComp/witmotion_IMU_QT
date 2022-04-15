@@ -48,6 +48,7 @@ struct witmotion_datapacket
         int8_t raw_signed[8];
         uint8_t raw[8];
         int16_t raw_cells[4];
+        uint32_t raw_large[2];
     }datastore;
     uint8_t crc;
 };

@@ -33,7 +33,6 @@ QWitmotionWT31NSensor::~QWitmotionWT31NSensor()
 
 void QWitmotionWT31NSensor::Packet(const witmotion_datapacket &packet)
 {
-    ttyout << "Packet 0x" << hex << packet.id_byte << dec << " received" << endl;
 }
 
 void QWitmotionWT31NSensor::Error(const QString &description)
