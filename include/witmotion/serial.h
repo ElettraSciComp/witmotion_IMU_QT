@@ -20,6 +20,7 @@ private:
     qint64 last_avail;
     quint16 avail_rep_count;
     uint8_t raw_data[128];
+    bool validate;
 protected:
     QTextStream ttyout;
     QTimer* poll_timer;
@@ -35,11 +36,14 @@ protected:
     witmotion_packet_id read_cell;
 
     virtual void ReadData();
+    virtual void SendConfig(const witmotion_config_packet& packet);
 public:
+    void SetBaudRate(const QSerialPort::BaudRate& rate);
     QBaseSerialWitmotionSensorReader(const QString device, const QSerialPort::BaudRate rate);
     virtual ~QBaseSerialWitmotionSensorReader();
     virtual void RunPoll();
     virtual void Suspend();
+    void ValidatePackets(const bool value);
 };
 
 }

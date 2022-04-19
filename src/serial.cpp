@@ -1,5 +1,6 @@
 #include "witmotion/serial.h"
 #include <exception>
+#include <unistd.h>
 
 namespace witmotion
 {
@@ -46,7 +47,11 @@ void QBaseSerialWitmotionSensorReader::ReadData()
                 if(counts[read_cell] == 8)
                 {
                     packets[read_cell].crc = current_byte;
-                    emit Acquired(packets[read_cell]);
+                    uint8_t current_crc = packets[read_cell].header_byte + packets[read_cell].id_byte;
+                    for(uint8_t i = 0; i < 8; i++)
+                        current_crc += packets[read_cell].datastore.raw[i];
+                    if(!validate || (current_crc == packets[read_cell].crc))
+                        emit Acquired(packets[read_cell]);
                     read_state = rsClear;
                 }
                 else
@@ -56,22 +61,43 @@ void QBaseSerialWitmotionSensorReader::ReadData()
     }
 }
 
+void QBaseSerialWitmotionSensorReader::SendConfig(const witmotion_config_packet &packet)
+{
+    static uint8_t serial_datapacket[5];
+    serial_datapacket[0] = packet.header_byte;
+    serial_datapacket[1] = packet.key_byte;
+    serial_datapacket[2] = packet.address_byte;
+    serial_datapacket[3] = packet.setting.raw[0];
+    serial_datapacket[4] = packet.setting.raw[1];
+    quint64 written;
+    ttyout << "Sending configuration packet..." << hex << "0x" << packet.address_byte << dec << endl;
+    written = witmotion_port->write(reinterpret_cast<const char*>(serial_datapacket), 5);
+    witmotion_port->waitForBytesWritten();
+    if(written != 5)
+        emit Error("Device reconfiguration error!");
+    witmotion_port->flush();
+    ttyout << "Configuration packet sent, please wait..." << endl;
+    sleep(1);
+}
+
+void QBaseSerialWitmotionSensorReader::SetBaudRate(const QSerialPort::BaudRate &rate)
+{
+    port_rate = rate;
+}
+
 QBaseSerialWitmotionSensorReader::QBaseSerialWitmotionSensorReader(const QString device, const QSerialPort::BaudRate rate):
     port_name(device),
     witmotion_port(nullptr),
     port_rate(rate),
     last_avail(0),
     avail_rep_count(0),
+    validate(false),
     ttyout(stdout),
     poll_timer(nullptr),
     read_state(rsClear)
 {
-    if(!((rate == QSerialPort::Baud9600)||(rate == QSerialPort::Baud115200)))
-    {
-        emit Error("Only 9600 and 115200 baud rates are supported!");
-        return;
-    }
     qRegisterMetaType<witmotion_datapacket>("witmotion_datapacket");
+    qRegisterMetaType<witmotion_config_packet>("witmotion_config_packet");
 }
 
 QBaseSerialWitmotionSensorReader::~QBaseSerialWitmotionSensorReader()
@@ -120,6 +146,11 @@ void QBaseSerialWitmotionSensorReader::Suspend()
     ttyout << "Suspending TTL connection, please emit RunPoll() again to proceed!" << endl;
     poll_timer = nullptr;
     witmotion_port = nullptr;
+}
+
+void QBaseSerialWitmotionSensorReader::ValidatePackets(const bool value)
+{
+    validate = value;
 }
 
 }

@@ -8,7 +8,6 @@ if(NOT HAVE_INTTYPES_H)
 endif(NOT HAVE_INTTYPES_H)
 include_directories(include)
 find_package(Qt5 REQUIRED COMPONENTS Core SerialPort)
-find_package(Threads REQUIRED)
 set(CMAKE_AUTOMOC ON)
 qt5_wrap_cpp(MOC_SOURCES
     include/witmotion/types.h
@@ -41,7 +40,6 @@ add_executable(library-init-test
 target_link_libraries(library-init-test
     Qt5::Core Qt5::SerialPort
     witmotion-wt31n-uart
-    Threads::Threads
     )
 add_test(NAME library-init-test
     COMMAND library-init-test

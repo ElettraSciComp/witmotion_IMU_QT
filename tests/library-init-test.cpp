@@ -1,6 +1,5 @@
 #include "witmotion/wt31n-uart.h"
 #include <unistd.h>
-#include <thread>
 using namespace witmotion::wt31n;
 
 
