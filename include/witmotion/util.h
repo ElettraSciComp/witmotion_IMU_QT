@@ -18,6 +18,7 @@ class witmotion_typed_bytecounts
 private:
     size_t array[32];
 public:
+    witmotion_typed_bytecounts();
     size_t& operator[](const witmotion_packet_id id);
 };
 

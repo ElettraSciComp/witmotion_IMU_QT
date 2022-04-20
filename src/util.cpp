@@ -16,6 +16,12 @@ witmotion_datapacket& witmotion_typed_packets::operator[](const witmotion_packet
     return array[int_id];
 }
 
+witmotion_typed_bytecounts::witmotion_typed_bytecounts()
+{
+    for(size_t i = 0; i < 32; i++)
+        array[i] = 0;
+}
+
 size_t& witmotion_typed_bytecounts::operator[](const witmotion_packet_id id)
 {
     size_t int_id = static_cast<size_t>(id) - 0x50;

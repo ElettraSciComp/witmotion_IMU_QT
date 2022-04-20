@@ -21,6 +21,8 @@ private:
     quint16 avail_rep_count;
     uint8_t raw_data[128];
     bool validate;
+    bool user_defined_return_interval;
+    uint32_t return_interval;
 protected:
     QTextStream ttyout;
     QTimer* poll_timer;
@@ -44,6 +46,7 @@ public:
     virtual void RunPoll();
     virtual void Suspend();
     void ValidatePackets(const bool value);
+    void SetSensorPollInterval(const uint32_t ms);
 };
 
 }

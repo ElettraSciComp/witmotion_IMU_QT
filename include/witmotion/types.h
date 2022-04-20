@@ -40,7 +40,22 @@ static const std::set<size_t> witmotion_registered_ids = {
     0x56,
     0x57,
     0x58,
+    0x59,
     0x5A
+};
+
+static const std::map<uint8_t, std::string> witmotion_packet_descriptions = {
+    {0x50, "Real Time Clock"},
+    {0x51, "Accelerations"},
+    {0x52, "Angular velocities"},
+    {0x53, "Spatial orientation (Euler angles)"},
+    {0x54, "Magnetometer/Magnetic orientation"},
+    {0x55, "Data ports (D0-D3) status"},
+    {0x56, "Barometry/Altimeter"},
+    {0x57, "GPS Coordinates"},
+    {0x58, "GPS Ground Speed"},
+    {0x59, "Spatial orientation (Quaternion)"},
+    {0x5A, "GPS accuracy estimation"}
 };
 
 struct witmotion_datapacket

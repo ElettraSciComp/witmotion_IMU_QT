@@ -20,8 +20,8 @@ set(LIBRARY_SOURCES
     src/serial.cpp
     src/wt31n-uart.cpp
     )
-add_library(witmotion-wt31n-uart SHARED ${LIBRARY_SOURCES})
-target_link_libraries(witmotion-wt31n-uart Qt5::Core Qt5::SerialPort)
+add_library(witmotion-uart SHARED ${LIBRARY_SOURCES})
+target_link_libraries(witmotion-uart Qt5::Core Qt5::SerialPort)
 
 add_executable(witmotion-wt31n-calibration
     src/calibration-standalone.cpp
@@ -33,14 +33,14 @@ add_executable(witmotion-wt31n-uart-test
     )
 target_link_libraries(witmotion-wt31n-uart-test Qt5::Core Qt5::SerialPort)
 
-enable_testing()
-add_executable(library-init-test
-    tests/library-init-test.cpp
+qt5_wrap_cpp(MOC_ENUMERATOR
+    include/witmotion/message-enumerator.h
     )
-target_link_libraries(library-init-test
+add_executable(message-enumerator
+    src/message-enumerator.cpp
+    ${MOC_ENUMERATOR}
+    )
+target_link_libraries(message-enumerator
     Qt5::Core Qt5::SerialPort
-    witmotion-wt31n-uart
-    )
-add_test(NAME library-init-test
-    COMMAND library-init-test
+    witmotion-uart
     )

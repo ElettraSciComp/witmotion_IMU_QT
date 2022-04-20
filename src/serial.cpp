@@ -92,6 +92,8 @@ QBaseSerialWitmotionSensorReader::QBaseSerialWitmotionSensorReader(const QString
     last_avail(0),
     avail_rep_count(0),
     validate(false),
+    user_defined_return_interval(false),
+    return_interval(50),
     ttyout(stdout),
     poll_timer(nullptr),
     read_state(rsClear)
@@ -127,7 +129,10 @@ void QBaseSerialWitmotionSensorReader::RunPoll()
     }
     poll_timer = new QTimer(this);
     poll_timer->setTimerType(Qt::TimerType::PreciseTimer);
-    poll_timer->setInterval((port_rate == QSerialPort::Baud9600) ? 50 : 5);
+    if(!user_defined_return_interval)
+        poll_timer->setInterval((port_rate == QSerialPort::Baud9600) ? 50 : 5);
+    else
+        poll_timer->setInterval(return_interval);
     timer_connection = connect(poll_timer, &QTimer::timeout, this, &QBaseSerialWitmotionSensorReader::ReadData);
     ttyout << "Instantiating timer at " << poll_timer->interval() << " ms" << endl;
     poll_timer->start();
@@ -151,6 +156,12 @@ void QBaseSerialWitmotionSensorReader::Suspend()
 void QBaseSerialWitmotionSensorReader::ValidatePackets(const bool value)
 {
     validate = value;
+}
+
+void QBaseSerialWitmotionSensorReader::SetSensorPollInterval(const uint32_t ms)
+{
+    user_defined_return_interval = true;
+    return_interval = ms;
 }
 
 }
