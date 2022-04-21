@@ -43,31 +43,27 @@ int main(int argc, char** args)
     QWitmotionWT31NSensor sensor(parser.value(DeviceNameOption),
                                  static_cast<QSerialPort::BaudRate>(parser.value(BaudRateOption).toInt()));
     sensor.setParent(dynamic_cast<QObject*>(&app));
-    sensor.SetValidation(true); // Instructs the library to accept only the valid packets from sensor
+    sensor.SetValidation(true); // Instructs the library to accept only the valid packets from sensor, to throw an error signal otherwise
     QObject::connect(&sensor, &QWitmotionWT31NSensor::ErrorOccurred, [](const QString& description){
         std::cout << "ERROR: " << description.toStdString() << std::endl;
         QCoreApplication::exit(1);
     }); // Connection of the error signal to the MOC compatible inlay lambda
     float ax = 0.0, ay = 0.0, az = 0.0, ex = 0.0, ey = 0.0, ez = 0.0;
-    QObject::connect(&sensor, &QWitmotionWT31NSensor::AcquiredAccelerations, [ax, ay, az](float& x, float& y, float& z, float& t) mutable
+    QObject::connect(&sensor, &QWitmotionWT31NSensor::AcquiredAccelerations, [&ax, &ay, &az](float& x, float& y, float& z, float& t)
     {
         ax = x;
         ay = y;
         az = z;
-        std::cout << "Accelerations:" << std::endl
-                  << "X\t" << ax << std::endl
-                  << "Y\t" << ay << std::endl
-                  << "Z\t" << az << std::endl;
     }); // Connection of the acceleration acquire signal to the MOC compatible mutable lambda
-    QObject::connect(&sensor, &QWitmotionWT31NSensor::AcquiredAngles, [ex, ey, ez](float& x, float& y, float& z, float& t) mutable
+    QObject::connect(&sensor, &QWitmotionWT31NSensor::AcquiredAngles, [&ax, &ay, &az, &ex, &ey, &ez](float& x, float& y, float& z, float& t)
     {
         ex = x;
         ey = y;
         ez = z;
-        std::cout << "Angles:" << std::endl
-                  << "Roll angle\t" << ex << std::endl
-                  << "Pitch angle\t" << ey << std::endl
-                  << "Yaw angle\t" << ez << std::endl;
+        std::cout << "Acquired:" << std::endl
+                  << "X: acceleration " << ax << " R angle " << ex * witmotion::DEG2RAD << std::endl
+                  << "Y: acceleration " << ay << " P angle " << ey * witmotion::DEG2RAD << std::endl
+                  << "Z: acceleration " << az << " Y angle " << ez * witmotion::DEG2RAD<< std::endl;
     }); // Connection of the Euler angle acquire signal to the MOC compatible mutable lambda
     sensor.Start();
     return app.exec();
