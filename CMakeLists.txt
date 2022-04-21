@@ -23,16 +23,6 @@ set(LIBRARY_SOURCES
 add_library(witmotion-uart SHARED ${LIBRARY_SOURCES})
 target_link_libraries(witmotion-uart Qt5::Core Qt5::SerialPort)
 
-add_executable(witmotion-wt31n-calibration
-    src/calibration-standalone.cpp
-    )
-target_link_libraries(witmotion-wt31n-calibration Qt5::Core Qt5::SerialPort)
-
-add_executable(witmotion-wt31n-uart-test
-    tests/witmotion-wt31n-uart-test.cpp
-    )
-target_link_libraries(witmotion-wt31n-uart-test Qt5::Core Qt5::SerialPort)
-
 qt5_wrap_cpp(MOC_ENUMERATOR
     include/witmotion/message-enumerator.h
     )
@@ -44,3 +34,20 @@ target_link_libraries(message-enumerator
     Qt5::Core Qt5::SerialPort
     witmotion-uart
     )
+option(BUILD_EXAMPLES "Whether build or not the set of example applications" ON)
+if(BUILD_EXAMPLES)
+    add_executable(wt31n-calibration
+        examples/wt31n/calibration-standalone.cpp
+        )
+    target_link_libraries(wt31n-calibration Qt5::Core Qt5::SerialPort)
+
+    add_executable(wt31n-standalone-decoder
+        examples/wt31n/witmotion-wt31n-uart-test.cpp
+        )
+    target_link_libraries(wt31n-standalone-decoder Qt5::Core Qt5::SerialPort)
+
+    add_executable(wt31n-monitor
+        examples/wt31n/monitor.cpp
+        )
+    target_link_libraries(wt31n-monitor witmotion-uart)
+endif(BUILD_EXAMPLES)
