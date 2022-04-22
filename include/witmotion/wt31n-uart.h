@@ -18,32 +18,17 @@ namespace witmotion
 namespace wt31n
 {
 
-class QWitmotionWT31NSensor: public QObject
+class QWitmotionWT31NSensor: public QAbstractWitmotionSensorController
 {
     Q_OBJECT
 private:
-    QString port_name;
-    QSerialPort::BaudRate port_rate;
-    QThread reader_thread;
-    QBaseSerialWitmotionSensorReader* reader;
-    QTextStream ttyout;
+    static const std::set<witmotion_packet_id> registered_types;
 public:
-    QWitmotionWT31NSensor(const QString tty_name, const QSerialPort::BaudRate rate);
-    void Start();
-    virtual ~QWitmotionWT31NSensor();
-    void Calibrate();
-    void SetBaudRate(const QSerialPort::BaudRate& rate);
-    void SetValidation(const bool validate);
-public slots:
-    void Packet(const witmotion_datapacket& packet);
-    void Error(const QString& description);
-signals:
-    void RunReader();
-    void ErrorOccurred(const QString& description);
-    void Acquired(const witmotion_datapacket& packet);
-    void AcquiredAccelerations(float& x, float& y, float& z, float& t);
-    void AcquiredAngles(float& roll, float& pitch, float& yaw, float& t);
-    void SendConfig(const witmotion_config_packet& packet);
+    virtual const std::set<witmotion_packet_id>* RegisteredPacketTypes();
+    virtual void Start();
+    virtual void Calibrate();
+    virtual void SetBaudRate(const QSerialPort::BaudRate& rate);
+    QWitmotionWT31NSensor(const QString device, const QSerialPort::BaudRate rate);
 };
 
 }

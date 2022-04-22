@@ -49,5 +49,35 @@ public:
     void SetSensorPollInterval(const uint32_t ms);
 };
 
+class QAbstractWitmotionSensorController: public QObject
+{
+    Q_OBJECT
+private:
+    QThread reader_thread;
+protected:
+    QString port_name;
+    QSerialPort::BaudRate port_rate;
+    QBaseSerialWitmotionSensorReader* reader;
+    QTextStream ttyout;
+public:
+    virtual const std::set<witmotion_packet_id>* RegisteredPacketTypes() = 0;
+    QAbstractWitmotionSensorController(const QString tty_name, const QSerialPort::BaudRate rate);
+    virtual void Start() = 0;
+    virtual ~QAbstractWitmotionSensorController();
+    virtual void Calibrate() = 0;
+    virtual void SetBaudRate(const QSerialPort::BaudRate& rate) = 0;
+    void SetValidation(const bool validate);
+public slots:
+    virtual void Packet(const witmotion_datapacket& packet);
+    virtual void Error(const QString& description);
+signals:
+    void RunReader();
+    void ErrorOccurred(const QString& description);
+    void Acquired(const witmotion_datapacket& packet);
+    void AcquiredAccelerations(float& x, float& y, float& z, float& t);
+    void AcquiredAngles(float& roll, float& pitch, float& yaw, float& t);
+    void SendConfig(const witmotion_config_packet& packet);
+};
+
 }
 #endif

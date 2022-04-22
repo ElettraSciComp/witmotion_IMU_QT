@@ -164,4 +164,64 @@ void QBaseSerialWitmotionSensorReader::SetSensorPollInterval(const uint32_t ms)
     return_interval = ms;
 }
 
+QAbstractWitmotionSensorController::QAbstractWitmotionSensorController(const QString tty_name, const QSerialPort::BaudRate rate):
+    reader_thread(dynamic_cast<QObject*>(this)),
+    port_name(tty_name),
+    port_rate(rate),
+    reader(nullptr),
+    ttyout(stdout)
+{
+    reader = new QBaseSerialWitmotionSensorReader(port_name, port_rate);
+    reader->moveToThread(&reader_thread);
+    connect(&reader_thread, &QThread::finished, reader, &QObject::deleteLater);
+    connect(this, &QAbstractWitmotionSensorController::RunReader, reader, &QAbstractWitmotionSensorReader::RunPoll);
+    connect(reader, &QAbstractWitmotionSensorReader::Acquired, this, &QAbstractWitmotionSensorController::Packet);
+    connect(reader, &QAbstractWitmotionSensorReader::Error, this, &QAbstractWitmotionSensorController::Error);
+    connect(this, &QAbstractWitmotionSensorController::SendConfig, reader, &QAbstractWitmotionSensorReader::SendConfig);
+    reader_thread.start();
+}
+
+QAbstractWitmotionSensorController::~QAbstractWitmotionSensorController()
+{
+    reader_thread.quit();
+    reader_thread.wait(10000);
+}
+
+void QAbstractWitmotionSensorController::SetValidation(const bool validate)
+{
+    reader->ValidatePackets(validate);
+}
+
+void QAbstractWitmotionSensorController::Packet(const witmotion_datapacket &packet)
+{
+    static const std::set<witmotion_packet_id>* registered = RegisteredPacketTypes();
+    if(registered->find(static_cast<witmotion_packet_id>(packet.id_byte)) == registered->end())
+    {
+        emit ErrorOccurred("Unregistered packet ID acquired. Please be sure that you use a proper driver class and namespace!");
+        return;
+    }
+    emit Acquired(packet);
+    float x, y, z, t;
+    switch(static_cast<witmotion_packet_id>(packet.id_byte))
+    {
+    case pidAcceleration:
+        decode_accelerations(packet, x, y, z, t);
+        emit AcquiredAccelerations(x, y, z, t);
+        break;
+    case pidAngles:
+        decode_angles(packet, x, y, z, t);
+        emit AcquiredAngles(x, y, z, t);
+        break;
+    default:
+        emit ErrorOccurred("Invalid packet ID acquired. This SHOULD NOT HAPPEN! Please check the driver!");
+    }
+}
+
+void QAbstractWitmotionSensorController::Error(const QString &description)
+{
+    ttyout << "Internal error occurred. Suspending the reader thread. Please check the sensor!" << endl;
+    reader->Suspend();
+    emit ErrorOccurred(description);
+}
+
 }

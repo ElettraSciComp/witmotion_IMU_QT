@@ -5,37 +5,11 @@ namespace witmotion
 namespace wt31n
 {
 
-QWitmotionWT31NSensor::QWitmotionWT31NSensor(const QString tty_name, const QSerialPort::BaudRate rate):
-    port_name(tty_name),
-    port_rate(rate),
-    reader_thread(dynamic_cast<QObject*>(this)),
-    reader(nullptr),
-    ttyout(stdout)
+const std::set<witmotion_packet_id> QWitmotionWT31NSensor::registered_types =
 {
-    reader = new QBaseSerialWitmotionSensorReader(port_name, port_rate);
-    reader->moveToThread(&reader_thread);
-    connect(&reader_thread, &QThread::finished, reader, &QObject::deleteLater);
-    connect(this, &QWitmotionWT31NSensor::RunReader, reader, &QAbstractWitmotionSensorReader::RunPoll);
-    connect(reader, &QAbstractWitmotionSensorReader::Acquired, this, &QWitmotionWT31NSensor::Packet);
-    connect(reader, &QAbstractWitmotionSensorReader::Error, this, &QWitmotionWT31NSensor::Error);
-    connect(this, &QWitmotionWT31NSensor::SendConfig, reader, &QAbstractWitmotionSensorReader::SendConfig);
-    reader_thread.start();
-}
-
-void QWitmotionWT31NSensor::Start()
-{
-    ttyout << "Running reader thread" << endl;
-    if(!((port_rate == QSerialPort::Baud9600) || (port_rate == QSerialPort::Baud115200)))
-        emit ErrorOccurred("Only 9600 or 115200 baud rates are supported for WT31N!");
-    else
-        emit RunReader();
-}
-
-QWitmotionWT31NSensor::~QWitmotionWT31NSensor()
-{
-    reader_thread.quit();
-    reader_thread.wait(10000);
-}
+    pidAcceleration,
+    pidAngles
+};
 
 void QWitmotionWT31NSensor::Calibrate()
 {
@@ -78,35 +52,28 @@ void QWitmotionWT31NSensor::SetBaudRate(const QSerialPort::BaudRate &rate)
     emit RunReader();
 }
 
-void QWitmotionWT31NSensor::SetValidation(const bool validate)
+QWitmotionWT31NSensor::QWitmotionWT31NSensor(const QString device, const QSerialPort::BaudRate rate):
+    QAbstractWitmotionSensorController(device, rate)
 {
-    reader->ValidatePackets(validate);
+    ttyout << "Creating multithreaded interface for Witmotion WT31N IMU sensor connected to "
+           << port_name
+           << "at "
+           << static_cast<int32_t>(port_rate)
+           << endl;
 }
 
-void QWitmotionWT31NSensor::Packet(const witmotion_datapacket &packet)
+const std::set<witmotion_packet_id> *QWitmotionWT31NSensor::RegisteredPacketTypes()
 {
-    emit Acquired(packet);
-    float x, y, z, t;
-    switch(static_cast<witmotion_packet_id>(packet.id_byte))
-    {
-    case pidAcceleration:
-        decode_accelerations(packet, x, y, z, t);
-        emit AcquiredAccelerations(x, y, z, t);
-        break;
-    case pidAngles:
-        decode_angles(packet, x, y, z, t);
-        emit AcquiredAngles(x, y, z, t);
-        break;
-    default:
-        emit ErrorOccurred("Invalid packet ID acquired. Please be sure that you selected a proper driver class and namespace!");
-    }
+    return &registered_types;
 }
 
-void QWitmotionWT31NSensor::Error(const QString &description)
+void QWitmotionWT31NSensor::Start()
 {
-    ttyout << "ERROR: " << description << endl;
-    reader->Suspend();
-    emit ErrorOccurred(description);
+    ttyout << "Running reader thread" << endl;
+    if(!((port_rate == QSerialPort::Baud9600) || (port_rate == QSerialPort::Baud115200)))
+        emit ErrorOccurred("Only 9600 or 115200 baud rates are supported for WT31N!");
+    else
+        emit RunReader();
 }
 
 }
