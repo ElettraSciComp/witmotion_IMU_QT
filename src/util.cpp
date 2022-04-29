@@ -103,7 +103,7 @@ float decode_angle(const int16_t* value)
 
 float decode_temperature(const int16_t* value)
 {
-    return static_cast<float>(*value) / 340.f;
+    return static_cast<float>(*value) / 100.f;
 }
 
 float decode_orientation(const int16_t *value)
