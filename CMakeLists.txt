@@ -51,3 +51,5 @@ if(BUILD_EXAMPLES)
         )
     target_link_libraries(wt31n-monitor witmotion-uart)
 endif(BUILD_EXAMPLES)
+
+include(cmake/doxygen-generator.cmake)
