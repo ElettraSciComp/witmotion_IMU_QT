@@ -53,3 +53,6 @@ if(BUILD_EXAMPLES)
 endif(BUILD_EXAMPLES)
 
 include(cmake/doxygen-generator.cmake)
+if(${PROJECT_NAME}_DOCS_EXISTS)
+    add_custom_target(docs ALL DEPENDS doc-${PROJECT_NAME})
+endif(${PROJECT_NAME}_DOCS_EXISTS)

@@ -7,27 +7,50 @@
 #include <QtCore>
 #include <QSerialPort>
 
+/*!
+    \file types.h
+    \brief Abstract types collection for Witmotion sensor library
+    \author Andrey Vukolov
+
+    This header file contains all abstract types and hardware-defined constants to operate Witmotion sensor device.
+*/
+
+
+/*!
+  \brief Main namespace of Witmotion UART connection library
+
+Upper level namespace containing all the declared constants, parameters, classes, functions.
+
+__NOTE__: it is strictly NOT RECOMMENDED to use this namespace implicitly through `using namespace` directive.
+*/
 namespace witmotion
 {
 
-static const uint8_t WITMOTION_HEADER_BYTE = 0x55;
-static const uint8_t WITMOTION_CONFIG_HEADER = 0xFF;
-static const uint8_t WITMOTION_CONFIG_KEY = 0xAA;
+static const uint8_t WITMOTION_HEADER_BYTE = 0x55; ///< Packet header byte value (vendor protocol-specific)
+static const uint8_t WITMOTION_CONFIG_HEADER = 0xFF; ///< Configuration header byte value (vendor protocol-specific)
+static const uint8_t WITMOTION_CONFIG_KEY = 0xAA; ///< Configuration marker key byte value (vendor protocol-specific)
 static const float DEG2RAD = M_PI / 180.f;
 
+/*!
+  \brief Packet type IDs from the vendor-defined protocol
+
+  If one of the packet type IDs defined here is registered after \ref WITMOTION_HEADER_BYTE in the data flow
+received from the sensor, the packet header is considered found and the remaining bytes are considered as body of the packet.
+See \ref util.h for decoder function reference.
+*/
 enum witmotion_packet_id
 {
-    pidRTC = 0x50,
-    pidAcceleration = 0x51,
-    pidAngularVelocity = 0x52,
-    pidAngles = 0x53,
-    pidMagnetometer = 0x54,
-    pidDataPortStatus = 0x55,
-    pidAltimeter = 0x56,
-    pidGPSCoordinates = 0x57,
-    pidGPSGroundSpeed = 0x58,
-    pidOrientation = 0x59,
-    pidGPSAccuracy = 0x5A
+    pidRTC = 0x50, ///< Real-Time-Clock
+    pidAcceleration = 0x51, ///< Linear accelerations + temperature/reserved field [X-Y-Z] (16-bit binary normalized quasi-floats)
+    pidAngularVelocity = 0x52, ///< Angular velocities + temperature/reserved field [Roll-Pitch-Yaw] (16-bit binary normalized quasi-floats)
+    pidAngles = 0x53, ///< Euler angles + temperature/reserved field [Roll-Pitch-Yaw] (16-bit binary normalized quasi-floats)
+    pidMagnetometer = 0x54, ///< Magnetic field tensity + temperature/reserved field [world X-Y-Z] (16-bit binary normalized quasi-floats)
+    pidDataPortStatus = 0x55, ///< Data port status packet, vendor-defined value
+    pidAltimeter = 0x56, ///< Altimeter + Barometer output (32-bit binary normalized quasi-floats)
+    pidGPSCoordinates = 0x57, ///< GPS: longitude + latitude, if supported by hardware (32-bit binary normalized quasi-floats)
+    pidGPSGroundSpeed = 0x58, ///< GPS: ground speed (32-bit binary normalized quasi-float) + altitude + angular velocity around vertical axis (16-bit binary normalized quasi-floats), if supported by hardware
+    pidOrientation = 0x59, ///< Orientation defined as quaternion [X-Y-Z-W], when available from the sensor firmware (16-bit binary normalized quasi-floats)
+    pidGPSAccuracy = 0x5A ///< GPS: visible satellites + variance vector [East-North-Up] (16-bit binary normalized quasi-floats)
 };
 
 static const std::set<size_t> witmotion_registered_ids = {
