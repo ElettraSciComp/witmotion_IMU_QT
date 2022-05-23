@@ -10,7 +10,7 @@
 /*!
     \file types.h
     \brief Abstract types collection for Witmotion sensor library
-    \author Andrey Vukolov
+    \author Andrey Vukolov andrey.vukolov@elettra.eu
 
     This header file contains all abstract types and hardware-defined constants to operate Witmotion sensor device.
 */
@@ -81,23 +81,41 @@ static const std::map<uint8_t, std::string> witmotion_packet_descriptions = {
     {0x5A, "GPS accuracy estimation"}
 };
 
+/*!
+ * \brief Generic structure respresenting the standard 11-byte datapacket defined in Witmotion protocol.
+*/
 struct witmotion_datapacket
 {
-    uint8_t header_byte;
-    uint8_t id_byte;
+    uint8_t header_byte; ///< Header byte, set constantly to \ref WITMOTION_HEADER_BYTE
+    uint8_t id_byte; ///< Packet type ID, referring to \ref witmotion_packet_id, otherwise the packet is considered of unknown type.
     union
     {
         int8_t raw_signed[8];
         uint8_t raw[8];
         int16_t raw_cells[4];
         int32_t raw_large[2];
-    }datastore;
-    uint8_t crc;
+    }datastore; ///< 8-byte internal data storage array represented as C-style memory union. The stored data represented as `int8_t*`, `uint8_t*`, `int16_t*` or `int32_t*` array head pointer.
+    uint8_t crc; ///< Validation CRC for the packet. Calculated as an equivalent to the following operation: \f$ crc = \sum_{i=0}^{i < 10} *\mbox{reinterpret_cast<uint8_t*>(this)} + i \f$
 };
 
+/*!
+ * \brief List of configuration slots (registers) available for the library.
+ *
+ * List of configuration slots (registers) available for the library. The actual availability depends from the actual sensor and installation circuit. Please refer to the official documentation for detailed explanation.
+*/
 enum witmotion_config_register_id
 {
+    /*!
+      Saves the settings uploaded in the current bringup session, or resets it to default (if supported). To make factory reset of the sensor, set `raw[0] = 0x01` in \ref witmotion_config_packet instance used.
+    */
     ridSaveSettings = 0x00,
+    /*!
+      Sets the sensor to calibration mode. The value stored in \ref witmotion_config_packet.`raw[0]` determines device selection:
+      - `0x00` - End calibration
+      - `0x01` - Accelerometer calibration
+      - `0x02` - Magnetometer calibration
+      - `0x03` - Altitude reset (only for barometric altimeter)
+    */
     ridCalibrate = 0x01,
     ridOutputValueSet = 0x02,
     ridOutputFrequency = 0x03,
@@ -172,16 +190,19 @@ enum witmotion_config_register_id
     ridGyroscopeAutoCalibrate = 0x63
 };
 
+/*!
+ * \brief Generic structure respresenting the standard 5-byte configuration command defined in Witmotion protocol.
+*/
 struct witmotion_config_packet
 {
-    uint8_t header_byte;
-    uint8_t key_byte;
-    uint8_t address_byte;
+    uint8_t header_byte; ///< Header byte, set constantly to \ref WITMOTION_CONFIG_HEADER
+    uint8_t key_byte; ///< Packet type, constantly set to \ref WITMOTION_CONFIG_KEY
+    uint8_t address_byte; ///< Configuration slot address, refers to the registered values in \ref witmotion_config_register_id
     union
     {
         uint8_t raw[2];
         uint16_t* bin;
-    }setting;
+    }setting; ///< 2-byte internal data storage array represented as C-style memory union. The values should be formulated byte-by-byte referring to the actual sensor's documentation.
 };
 
 class QAbstractWitmotionSensorReader: public QObject
