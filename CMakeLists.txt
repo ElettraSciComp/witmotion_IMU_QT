@@ -18,7 +18,6 @@ set(LIBRARY_SOURCES
     ${MOC_SOURCES}
     src/util.cpp
     src/serial.cpp
-    src/wt31n-uart.cpp
     )
 add_library(witmotion-uart SHARED ${LIBRARY_SOURCES})
 target_link_libraries(witmotion-uart Qt5::Core Qt5::SerialPort)
