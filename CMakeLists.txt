@@ -45,10 +45,10 @@ if(BUILD_EXAMPLES)
         )
     target_link_libraries(wt31n-standalone-decoder Qt5::Core Qt5::SerialPort)
 
-    add_executable(wt31n-monitor
-        examples/wt31n/monitor.cpp
-        )
-    target_link_libraries(wt31n-monitor witmotion-uart)
+#    add_executable(wt31n-monitor
+#        examples/wt31n/monitor.cpp
+#        )
+#    target_link_libraries(wt31n-monitor witmotion-uart)
 endif(BUILD_EXAMPLES)
 
 include(cmake/doxygen-generator.cmake)

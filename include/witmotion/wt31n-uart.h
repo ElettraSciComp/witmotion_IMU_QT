@@ -24,11 +24,11 @@ class QWitmotionWT31NSensor: public QAbstractWitmotionSensorController
 private:
     static const std::set<witmotion_packet_id> registered_types;
 public:
-    virtual const std::set<witmotion_packet_id>* RegisteredPacketTypes();
-    virtual void Start();
-    virtual void Calibrate();
-    virtual void SetBaudRate(const QSerialPort::BaudRate& rate);
-    QWitmotionWT31NSensor(const QString device, const QSerialPort::BaudRate rate);
+//    virtual const std::set<witmotion_packet_id>* RegisteredPacketTypes();
+//    virtual void Start();
+//    virtual void Calibrate();
+//    virtual void SetBaudRate(const QSerialPort::BaudRate& rate);
+//    QWitmotionWT31NSensor(const QString device, const QSerialPort::BaudRate rate);
 };
 
 }
