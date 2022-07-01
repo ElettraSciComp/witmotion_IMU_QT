@@ -238,4 +238,24 @@ void decode_gps_accuracy(const witmotion_datapacket &packet,
     vertical_accuracy = decode_orientation(packet.datastore.raw_cells + 3);
 }
 
+void decode_realtime_clock(const witmotion_datapacket &packet,
+                           uint8_t &year,
+                           uint8_t &month,
+                           uint8_t &day,
+                           uint8_t &hour,
+                           uint8_t &minute,
+                           uint8_t &second,
+                           uint16_t &millisecond)
+{
+    if(static_cast<witmotion_packet_id>(packet.id_byte) != pidRTC)
+        return;
+    year = packet.datastore.raw[0];
+    month = packet.datastore.raw[1];
+    day = packet.datastore.raw[2];
+    hour = packet.datastore.raw[3];
+    minute = packet.datastore.raw[4];
+    second = packet.datastore.raw[5];
+    millisecond = static_cast<uint16_t>(packet.datastore.raw_cells[3]);
+}
+
 }

@@ -39,6 +39,14 @@ void decode_gps_coord(const int32_t* value,
                       double& min);
 
 /* PACKET DECODERS */
+void decode_realtime_clock(const witmotion_datapacket& packet,
+                           uint8_t& year,
+                           uint8_t& month,
+                           uint8_t& day,
+                           uint8_t& hour,
+                           uint8_t& minute,
+                           uint8_t& second,
+                           uint16_t& millisecond);
 void decode_accelerations(const witmotion_datapacket& packet,
                           float& x,
                           float& y,
