@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.1)
 project(witmotion-uart-qt)
-execute_process(COMMAND git rev-parse HEAD
+execute_process(COMMAND git rev-parse --short HEAD
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
     OUTPUT_VARIABLE COMMIT_ID
     OUTPUT_STRIP_TRAILING_WHITESPACE
