@@ -1,5 +1,17 @@
 cmake_minimum_required(VERSION 3.1)
 project(witmotion-uart-qt)
+execute_process(COMMAND git rev-parse HEAD
+    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+    OUTPUT_VARIABLE COMMIT_ID
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+)
+file(STRINGS "version" PROJECT_VERSION)
+if(CMAKE_BUILD_TYPE STREQUAL "Release")
+set(PROJECT_VERSION "${PROJECT_VERSION}")
+else(CMAKE_BUILD_TYPE STREQUAL "Release")
+set(PROJECT_VERSION "${PROJECT_VERSION}~dev_${COMMIT_ID}")
+endif(CMAKE_BUILD_TYPE STREQUAL "Release")
+message(STATUS "Building version ${PROJECT_VERSION}")
 set (CMAKE_CXX_STANDARD 14)
 include(CheckIncludeFile)
 check_include_file("inttypes.h" HAVE_INTTYPES_H)
