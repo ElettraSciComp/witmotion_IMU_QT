@@ -55,7 +55,7 @@ target_link_libraries(message-enumerator
 qt5_wrap_cpp(MOC_WT31N
     include/witmotion/wt31n-uart.h
     )
-add_library(witmotion-wt31n
+add_library(witmotion-wt31n SHARED
     ${MOC_WT31N}
     src/wt31n-uart.cpp
     )
