@@ -99,21 +99,6 @@ int main(int argc, char** args)
     bool control_baud_9600 = parser.value(SetBaudRateOption) != "115200";
     bool control_calibration = parser.isSet(CalibrateOption);
     bool covariance = parser.isSet(CovarianceOption);
-    if(covariance)
-    {
-        std::cout << "COVARIANCE MEASUREMENT MODE"
-                  << std::endl
-                  << "PLEASE KEEP THE SENSOR STATIC ON THE HORIZONTAL SURFACE TO MEASURE NOISE VARIANCE!!!"
-                  << std::endl
-                  << "Acquisition starts in"
-                  << std::endl;
-        for(size_t i = 5; i >= 1; i--)
-        {
-            std::cout << i << " ";
-            sleep(1);
-        }
-        std::cout << std::endl << "Accumulating data..." << std::endl;
-    }
 
     // Setting up data capturing slots: mutable/immutable C++14 lambda functions
     bool first = true;
@@ -166,14 +151,14 @@ int main(int argc, char** args)
                           << std::endl;
                 for(size_t i = 5; i >= 1; i--)
                 {
-                    std::cout << i << " ";
+                    std::cout << i << std::endl;
                     sleep(1);
                 }
                 std::cout << std::endl << "Calibrating..." << std::endl;
                 sensor.Calibrate();
                 sleep(1);
-                std::cout << "Calibration completed. Please wait 5 sec before starting the new data acquisition" << std::endl;
-                sleep(5);
+                std::cout << "Calibration completed. Please reconnect now" << std::endl;
+                QCoreApplication::exit(0);
             }
             std::cout.precision(5);
             std::cout << std::fixed;
@@ -232,7 +217,7 @@ int main(int argc, char** args)
                   << "\t0.00000\t0.00000\t" << variance(accels_z) << "\t]" << std::endl
                   << std::endl
                   << "Angles (total for " << pitches.size() << " measurements): " << std::endl
-                  << "[\t" << variance(rolls) << "\t0.00000\t\0.00000" << std::endl
+                  << "[\t" << variance(rolls) << "\t0.00000\t0.00000" << std::endl
                   << "\t0.00000\t" << variance(pitches) << "\t0.00000" << std::endl
                   << "\t0.00000\t0.00000\t0.00000\t]" << std::endl
                   << std::endl;
