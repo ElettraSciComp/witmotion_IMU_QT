@@ -201,20 +201,6 @@ void QAbstractWitmotionSensorController::Packet(const witmotion_datapacket &pack
         return;
     }
     emit Acquired(packet);
-    float x, y, z, t;
-    switch(static_cast<witmotion_packet_id>(packet.id_byte))
-    {
-    case pidAcceleration:
-        decode_accelerations(packet, x, y, z, t);
-        emit AcquiredAccelerations(x, y, z, t);
-        break;
-    case pidAngles:
-        decode_angles(packet, x, y, z, t);
-        emit AcquiredAngles(x, y, z, t);
-        break;
-    default:
-        emit ErrorOccurred("Invalid packet ID acquired. This SHOULD NOT HAPPEN! Please check the driver!");
-    }
 }
 
 void QAbstractWitmotionSensorController::Error(const QString &description)

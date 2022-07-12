@@ -105,10 +105,7 @@ struct witmotion_datapacket
 */
 enum witmotion_config_register_id
 {
-    /*!
-      Saves the settings uploaded in the current bringup session, or resets it to default (if supported). To make factory reset of the sensor, set `raw[0] = 0x01` in \ref witmotion_config_packet instance used.
-    */
-    ridSaveSettings = 0x00,
+    ridSaveSettings = 0x00, ///< Saves the settings uploaded in the current bringup session, or resets it to default (if supported). To make factory reset of the sensor, set `raw[0] = 0x01` in \ref witmotion_config_packet instance used.
     /*!
       Sets the sensor to calibration mode. The value stored in \ref witmotion_config_packet.`raw[0]` determines device selection:
       - `0x00` - End calibration

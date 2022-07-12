@@ -74,8 +74,6 @@ signals:
     void RunReader();
     void ErrorOccurred(const QString& description);
     void Acquired(const witmotion_datapacket& packet);
-    void AcquiredAccelerations(float& x, float& y, float& z, float& t);
-    void AcquiredAngles(float& roll, float& pitch, float& yaw, float& t);
     void SendConfig(const witmotion_config_packet& packet);
 };
 

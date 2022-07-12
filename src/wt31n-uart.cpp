@@ -40,16 +40,11 @@ void QWitmotionWT31NSensor::SetBaudRate(const QSerialPort::BaudRate &rate)
     config_packet.setting.raw[0] = witmotion_baud_rate(port_rate);
     config_packet.setting.raw[1] = 0x00;
     emit SendConfig(config_packet);
-    config_packet.address_byte = ridOutputFrequency;
-    config_packet.setting.raw[0] = (port_rate == QSerialPort::Baud9600) ? witmotion_output_frequency(2) : witmotion_output_frequency(10);
-    emit SendConfig(config_packet);
     config_packet.address_byte = ridSaveSettings;
     config_packet.setting.raw[0] = 0x00;
     emit SendConfig(config_packet);
-    ttyout << "Reopening port..." << endl;
+    ttyout << "Completed" << endl;
     reader->Suspend();
-    sleep(1);
-    emit RunReader();
 }
 
 QWitmotionWT31NSensor::QWitmotionWT31NSensor(const QString device, const QSerialPort::BaudRate rate):
@@ -57,8 +52,9 @@ QWitmotionWT31NSensor::QWitmotionWT31NSensor(const QString device, const QSerial
 {
     ttyout << "Creating multithreaded interface for Witmotion WT31N IMU sensor connected to "
            << port_name
-           << "at "
+           << " at "
            << static_cast<int32_t>(port_rate)
+           << " baud"
            << endl;
 }
 
@@ -78,3 +74,5 @@ void QWitmotionWT31NSensor::Start()
 
 }
 }
+
+
