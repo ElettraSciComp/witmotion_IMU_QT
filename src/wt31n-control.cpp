@@ -137,9 +137,7 @@ int main(int argc, char** args)
                 QSerialPort::BaudRate new_baud = control_baud_9600 ? QSerialPort::Baud9600 : QSerialPort::Baud115200;
                 std::cout << "Resetting baud rate to " << new_baud << " baud" << std::endl;
                 sensor.SetBaudRate(new_baud);
-                sleep(1);
                 std::cout << "Baud rate reset, please reconnect with proper port settings" << std::endl;
-                QCoreApplication::exit(0);
             }
             if(control_calibration)
             {
