@@ -138,6 +138,7 @@ int main(int argc, char** args)
                 std::cout << "Resetting baud rate to " << new_baud << " baud" << std::endl;
                 sensor.SetBaudRate(new_baud);
                 std::cout << "Baud rate reset, please reconnect with proper port settings" << std::endl;
+                QCoreApplication::exit(0);
             }
             if(control_calibration)
             {
