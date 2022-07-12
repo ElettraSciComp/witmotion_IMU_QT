@@ -75,9 +75,8 @@ void QBaseSerialWitmotionSensorReader::SendConfig(const witmotion_config_packet 
     witmotion_port->waitForBytesWritten();
     if(written != 5)
         emit Error("Device reconfiguration error!");
-    witmotion_port->flush();
     ttyout << "Configuration packet sent, please wait..." << endl;
-    sleep(1);
+    witmotion_port->flush();
 }
 
 void QBaseSerialWitmotionSensorReader::SetBaudRate(const QSerialPort::BaudRate &rate)
@@ -130,7 +129,7 @@ void QBaseSerialWitmotionSensorReader::RunPoll()
     poll_timer = new QTimer(this);
     poll_timer->setTimerType(Qt::TimerType::PreciseTimer);
     if(!user_defined_return_interval)
-        poll_timer->setInterval((port_rate == QSerialPort::Baud9600) ? 50 : 5);
+        poll_timer->setInterval((port_rate == QSerialPort::Baud9600) ? 50 : 30);
     else
         poll_timer->setInterval(return_interval);
     timer_connection = connect(poll_timer, &QTimer::timeout, this, &QBaseSerialWitmotionSensorReader::ReadData);

@@ -43,9 +43,8 @@ void QWitmotionWT31NSensor::SetBaudRate(const QSerialPort::BaudRate &rate)
     config_packet.address_byte = ridSaveSettings;
     config_packet.setting.raw[0] = 0x00;
     emit SendConfig(config_packet);
+    sleep(1);
     ttyout << "Completed" << endl;
-    reader->Suspend();
-    reader->SetSensorPollInterval(10);
 }
 
 QWitmotionWT31NSensor::QWitmotionWT31NSensor(const QString device, const QSerialPort::BaudRate rate):
