@@ -102,7 +102,7 @@ int main(int argc, char** args)
 
     // Creating the sensor handler
     uint32_t interval = parser.value(IntervalOption).toUInt();
-    if(interval == 0)
+    if(interval < 5)
     {
         std::cout << "Wrong port polling interval specified, falling mack to 50 ms!" << std::endl;
         interval = 50;
