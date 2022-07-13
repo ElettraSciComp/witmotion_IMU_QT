@@ -64,7 +64,7 @@ int main(int argc, char** args)
                                          "9600");
     QCommandLineOption SetPollingRateOption(QStringList() << "set-frequency",
                                             "Set output polling frequency",
-                                            "10 or 50 Hz",
+                                            "10 or 100 Hz",
                                             "10");
     QCommandLineOption CovarianceOption("covariance",
                                         "Measure spatial covariance");

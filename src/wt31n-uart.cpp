@@ -51,9 +51,9 @@ void QWitmotionWT31NSensor::SetBaudRate(const QSerialPort::BaudRate &rate)
 
 void QWitmotionWT31NSensor::SetPollingRate(const uint32_t hz)
 {
-    if(!((hz == 10) || (hz == 50)))
+    if(!((hz == 10) || (hz == 100)))
     {
-        emit ErrorOccurred("Only 10 or 50 Hz are supported for WT31N!");
+        emit ErrorOccurred("Only 10 or 100 Hz are supported for WT31N!");
         return;
     }
     witmotion_config_packet config_packet;
