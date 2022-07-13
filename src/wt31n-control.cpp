@@ -50,6 +50,10 @@ int main(int argc, char** args)
                                       "Baudrate to set up the port",
                                       "9600 or 115200",
                                       "9600");
+    QCommandLineOption IntervalOption(QStringList() << "i" << "interval",
+                                      "Port polling interval",
+                                      "50 ms",
+                                      "50");
     QCommandLineOption DeviceNameOption(QStringList() << "d" << "device",
                                         "Port serial device name, without \'/dev\'",
                                         "ttyUSB0",
@@ -70,6 +74,7 @@ int main(int argc, char** args)
                                         "Measure spatial covariance");
     QCommandLineOption LogOption("log", "Log acquisition to sensor.log file");
     parser.addOption(BaudRateOption);
+    parser.addOption(IntervalOption);
     parser.addOption(DeviceNameOption);
     parser.addOption(ValidateOption);
     parser.addOption(CalibrateOption);
@@ -96,7 +101,13 @@ int main(int argc, char** args)
     std::cout << "Opening device /dev/" << device.toStdString() << " at " << static_cast<int32_t>(rate) << " baud" << std::endl;
 
     // Creating the sensor handler
-    QWitmotionWT31NSensor sensor(device, rate);
+    uint32_t interval = parser.value(IntervalOption).toUInt();
+    if(interval == 0)
+    {
+        std::cout << "Wrong port polling interval specified, falling mack to 50 ms!" << std::endl;
+        interval = 50;
+    }
+    QWitmotionWT31NSensor sensor(device, rate, interval);
     sensor.SetValidation(parser.isSet(ValidateOption));
 
     // Control tasks

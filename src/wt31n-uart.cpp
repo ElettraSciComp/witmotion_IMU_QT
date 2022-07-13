@@ -70,7 +70,9 @@ void QWitmotionWT31NSensor::SetPollingRate(const uint32_t hz)
     ttyout << "Completed" << endl;
 }
 
-QWitmotionWT31NSensor::QWitmotionWT31NSensor(const QString device, const QSerialPort::BaudRate rate):
+QWitmotionWT31NSensor::QWitmotionWT31NSensor(const QString device,
+                                             const QSerialPort::BaudRate rate,
+                                             const uint32_t polling_period):
     QAbstractWitmotionSensorController(device, rate)
 {
     ttyout << "Creating multithreaded interface for Witmotion WT31N IMU sensor connected to "
@@ -79,7 +81,7 @@ QWitmotionWT31NSensor::QWitmotionWT31NSensor(const QString device, const QSerial
            << static_cast<int32_t>(port_rate)
            << " baud"
            << endl;
-    reader->SetSensorPollInterval(30);
+    reader->SetSensorPollInterval(polling_period);
 }
 
 const std::set<witmotion_packet_id> *QWitmotionWT31NSensor::RegisteredPacketTypes()

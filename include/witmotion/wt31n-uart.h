@@ -29,7 +29,9 @@ public:
     virtual void Calibrate();
     virtual void SetBaudRate(const QSerialPort::BaudRate& rate);
     virtual void SetPollingRate(const uint32_t hz);
-    QWitmotionWT31NSensor(const QString device, const QSerialPort::BaudRate rate);
+    QWitmotionWT31NSensor(const QString device,
+                          const QSerialPort::BaudRate rate,
+                          const uint32_t polling_period = 50);
 };
 
 }
