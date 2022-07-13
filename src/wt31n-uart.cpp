@@ -5,6 +5,8 @@ namespace witmotion
 namespace wt31n
 {
 
+using namespace Qt;
+
 const std::set<witmotion_packet_id> QWitmotionWT31NSensor::registered_types =
 {
     pidAcceleration,
@@ -47,6 +49,27 @@ void QWitmotionWT31NSensor::SetBaudRate(const QSerialPort::BaudRate &rate)
     ttyout << "Completed" << endl;
 }
 
+void QWitmotionWT31NSensor::SetPollingRate(const uint32_t hz)
+{
+    if(!((hz == 10) || (hz == 50)))
+    {
+        emit ErrorOccurred("Only 10 or 50 Hz are supported for WT31N!");
+        return;
+    }
+    witmotion_config_packet config_packet;
+    config_packet.header_byte = WITMOTION_CONFIG_HEADER;
+    config_packet.key_byte = WITMOTION_CONFIG_KEY;
+    config_packet.address_byte = ridOutputFrequency;
+    config_packet.setting.raw[0] = witmotion_output_frequency(hz);
+    config_packet.setting.raw[1] = 0x00;
+    emit SendConfig(config_packet);
+    config_packet.address_byte = ridSaveSettings;
+    config_packet.setting.raw[0] = 0x00;
+    emit SendConfig(config_packet);
+    sleep(1);
+    ttyout << "Completed" << endl;
+}
+
 QWitmotionWT31NSensor::QWitmotionWT31NSensor(const QString device, const QSerialPort::BaudRate rate):
     QAbstractWitmotionSensorController(device, rate)
 {
@@ -56,6 +79,7 @@ QWitmotionWT31NSensor::QWitmotionWT31NSensor(const QString device, const QSerial
            << static_cast<int32_t>(port_rate)
            << " baud"
            << endl;
+    reader->SetSensorPollInterval(30);
 }
 
 const std::set<witmotion_packet_id> *QWitmotionWT31NSensor::RegisteredPacketTypes()

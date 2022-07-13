@@ -62,6 +62,10 @@ int main(int argc, char** args)
                                          "Reset the connection baud rate and polling interval",
                                          "9600 or 115200",
                                          "9600");
+    QCommandLineOption SetPollingRateOption(QStringList() << "set-frequency",
+                                            "Set output polling frequency",
+                                            "10 or 50 Hz",
+                                            "10");
     QCommandLineOption CovarianceOption("covariance",
                                         "Measure spatial covariance");
     QCommandLineOption LogOption("log", "Log acquisition to sensor.log file");
@@ -71,6 +75,7 @@ int main(int argc, char** args)
     parser.addOption(CalibrateOption);
     parser.addOption(CovarianceOption);
     parser.addOption(SetBaudRateOption);
+    parser.addOption(SetPollingRateOption);
     parser.addOption(LogOption);
     parser.process(app);
 
@@ -99,6 +104,8 @@ int main(int argc, char** args)
     bool control_baud_9600 = parser.value(SetBaudRateOption) != "115200";
     bool control_calibration = parser.isSet(CalibrateOption);
     bool covariance = parser.isSet(CovarianceOption);
+    bool control_set_freq = parser.isSet(SetPollingRateOption);
+    uint32_t new_freq = parser.value(SetPollingRateOption).toUInt();
 
     // Setting up data capturing slots: mutable/immutable C++14 lambda functions
     bool first = true;
@@ -121,7 +128,9 @@ int main(int argc, char** args)
                      &times,
                      control_set_baud,
                      control_baud_9600,
-                     control_calibration](const witmotion::witmotion_datapacket& packet)
+                     control_calibration,
+                     control_set_freq,
+                     new_freq](const witmotion::witmotion_datapacket& packet)
     {
         float ax, ay, az, roll, pitch, yaw, t;
         static size_t packets = 1;
@@ -138,6 +147,13 @@ int main(int argc, char** args)
                 std::cout << "Resetting baud rate to " << new_baud << " baud" << std::endl;
                 sensor.SetBaudRate(new_baud);
                 std::cout << "Baud rate reset, please reconnect with proper port settings" << std::endl;
+                QCoreApplication::exit(0);
+            }
+            if(control_set_freq)
+            {
+                std::cout << "Changing output frequency to " << new_freq << " Hz" << std::endl;
+                sensor.SetPollingRate(new_freq);
+                std::cout << "Sensor output frequency reset, please reconnect with proper port settings" << std::endl;
                 QCoreApplication::exit(0);
             }
             if(control_calibration)
