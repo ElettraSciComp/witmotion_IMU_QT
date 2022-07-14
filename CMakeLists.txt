@@ -1,5 +1,7 @@
 cmake_minimum_required(VERSION 3.1)
 project(witmotion-uart-qt)
+
+# VERSIONING
 execute_process(COMMAND git rev-parse --short HEAD
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
     OUTPUT_VARIABLE COMMIT_ID
@@ -12,13 +14,19 @@ else(CMAKE_BUILD_TYPE STREQUAL "Release")
 set(PROJECT_VERSION "${PROJECT_VERSION}~dev_${COMMIT_ID}")
 endif(CMAKE_BUILD_TYPE STREQUAL "Release")
 message(STATUS "Building version ${PROJECT_VERSION}")
+configure_file(config/version.h.in
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/witmotion/version.h
+    )
+
 set (CMAKE_CXX_STANDARD 14)
 include(CheckIncludeFile)
 check_include_file("inttypes.h" HAVE_INTTYPES_H)
 if(NOT HAVE_INTTYPES_H)
     message(FATAL_ERROR "\'inttypes.h\' include file required!. Please check your toolchain!")
 endif(NOT HAVE_INTTYPES_H)
-include_directories(include)
+include_directories(include
+    ${CMAKE_CURRENT_BINARY_DIR}
+    )
 find_package(Qt5 REQUIRED COMPONENTS Core SerialPort)
 set(CMAKE_AUTOMOC ON)
 

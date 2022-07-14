@@ -7,6 +7,8 @@
 #include <QtCore>
 #include <QSerialPort>
 
+#include "witmotion/version.h"
+
 /*!
     \file types.h
     \brief Abstract types collection for Witmotion sensor library

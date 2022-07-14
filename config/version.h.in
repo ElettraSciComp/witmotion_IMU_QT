@@ -1,0 +1,9 @@
+namespace witmotion
+{
+
+static const std::string library_version()
+{
+    return "${PROJECT_VERSION}";
+}
+
+}
