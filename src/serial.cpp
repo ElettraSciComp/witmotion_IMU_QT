@@ -80,7 +80,7 @@ void QBaseSerialWitmotionSensorReader::Configure()
         serial_datapacket[3] = packet.setting.raw[0];
         serial_datapacket[4] = packet.setting.raw[1];
         quint64 written;
-        ttyout << "Sending configuration packet..." << hex << "0x" << packet.address_byte << dec << endl;
+        ttyout << "Sending configuration packet " << hex << "0x" << packet.address_byte << dec << endl;
         written = witmotion_port->write(reinterpret_cast<const char*>(serial_datapacket), 5);
         witmotion_port->waitForBytesWritten();
         if(written != 5)
