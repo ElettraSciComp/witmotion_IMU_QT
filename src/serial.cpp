@@ -68,7 +68,7 @@ void QBaseSerialWitmotionSensorReader::Configure()
     if(configuration.empty())
         return;
     configuring = true;
-    ttyout << "Configuration task detected, " << configuration.size() << "commands in list, configuring sensor..." << Qt::endl;
+    ttyout << "Configuration task detected, " << configuration.size() << " commands in list, configuring sensor..." << Qt::endl;
     bool error = false;
     for(auto i = configuration.begin(); i != configuration.end(); i++)
     {

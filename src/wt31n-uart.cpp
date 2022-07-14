@@ -46,7 +46,6 @@ void QWitmotionWT31NSensor::SetBaudRate(const QSerialPort::BaudRate &rate)
     config_packet.setting.raw[0] = 0x00;
     emit SendConfig(config_packet);
     sleep(1);
-    ttyout << "Completed" << endl;
 }
 
 void QWitmotionWT31NSensor::SetPollingRate(const uint32_t hz)
@@ -67,7 +66,6 @@ void QWitmotionWT31NSensor::SetPollingRate(const uint32_t hz)
     config_packet.setting.raw[0] = 0x00;
     emit SendConfig(config_packet);
     sleep(1);
-    ttyout << "Completed" << endl;
 }
 
 QWitmotionWT31NSensor::QWitmotionWT31NSensor(const QString device,
