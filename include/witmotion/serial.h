@@ -27,6 +27,7 @@ protected:
     QTextStream ttyout;
     QTimer* poll_timer;
     QMetaObject::Connection timer_connection;
+    QMetaObject::Connection config_connection;
     enum read_state_t
     {
         rsUnknown,
@@ -37,7 +38,10 @@ protected:
     witmotion_typed_bytecounts counts;
     witmotion_packet_id read_cell;
 
+    volatile bool configuring;
+    std::list<witmotion_config_packet> configuration;
     virtual void ReadData();
+    virtual void Configure();
     virtual void SendConfig(const witmotion_config_packet& packet);
 public:
     void SetBaudRate(const QSerialPort::BaudRate& rate);

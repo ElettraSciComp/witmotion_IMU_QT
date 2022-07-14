@@ -7,6 +7,8 @@ namespace witmotion
 
 void QBaseSerialWitmotionSensorReader::ReadData()
 {
+    if(configuring)
+        return;
     qint64 bytes_read;
     qint64 bytes_avail = witmotion_port->bytesAvailable();
     if(bytes_avail == last_avail)
@@ -61,22 +63,44 @@ void QBaseSerialWitmotionSensorReader::ReadData()
     }
 }
 
+void QBaseSerialWitmotionSensorReader::Configure()
+{
+    if(configuration.empty())
+        return;
+    configuring = true;
+    ttyout << "Configuration task detected, " << configuration.size() << "commands in list, configuring sensor..." << Qt::endl;
+    bool error = false;
+    for(auto i = configuration.begin(); i != configuration.end(); i++)
+    {
+        witmotion_config_packet packet = (*i);
+        static uint8_t serial_datapacket[5];
+        serial_datapacket[0] = packet.header_byte;
+        serial_datapacket[1] = packet.key_byte;
+        serial_datapacket[2] = packet.address_byte;
+        serial_datapacket[3] = packet.setting.raw[0];
+        serial_datapacket[4] = packet.setting.raw[1];
+        quint64 written;
+        ttyout << "Sending configuration packet..." << hex << "0x" << packet.address_byte << dec << endl;
+        written = witmotion_port->write(reinterpret_cast<const char*>(serial_datapacket), 5);
+        witmotion_port->waitForBytesWritten();
+        if(written != 5)
+        {
+            error = true;
+            break;
+        }
+        ttyout << "Configuration packet sent, flushing buffers..." << endl;
+        witmotion_port->flush();
+    }
+    ttyout << "Configuration completed" << Qt::endl;
+    configuration.clear();
+    configuring = false;
+    if(error)
+        emit Error("Error occurred when reconfiguring sensor!");
+}
+
 void QBaseSerialWitmotionSensorReader::SendConfig(const witmotion_config_packet &packet)
 {
-    static uint8_t serial_datapacket[5];
-    serial_datapacket[0] = packet.header_byte;
-    serial_datapacket[1] = packet.key_byte;
-    serial_datapacket[2] = packet.address_byte;
-    serial_datapacket[3] = packet.setting.raw[0];
-    serial_datapacket[4] = packet.setting.raw[1];
-    quint64 written;
-    ttyout << "Sending configuration packet..." << hex << "0x" << packet.address_byte << dec << endl;
-    written = witmotion_port->write(reinterpret_cast<const char*>(serial_datapacket), 5);
-    witmotion_port->waitForBytesWritten();
-    if(written != 5)
-        emit Error("Device reconfiguration error!");
-    ttyout << "Configuration packet sent, please wait..." << endl;
-    witmotion_port->flush();
+    configuration.push_back(packet);
 }
 
 void QBaseSerialWitmotionSensorReader::SetBaudRate(const QSerialPort::BaudRate &rate)
@@ -95,7 +119,8 @@ QBaseSerialWitmotionSensorReader::QBaseSerialWitmotionSensorReader(const QString
     return_interval(50),
     ttyout(stdout),
     poll_timer(nullptr),
-    read_state(rsClear)
+    read_state(rsClear),
+    configuring(false)
 {
     qRegisterMetaType<witmotion_datapacket>("witmotion_datapacket");
     qRegisterMetaType<witmotion_config_packet>("witmotion_config_packet");
@@ -133,6 +158,7 @@ void QBaseSerialWitmotionSensorReader::RunPoll()
     else
         poll_timer->setInterval(return_interval);
     timer_connection = connect(poll_timer, &QTimer::timeout, this, &QBaseSerialWitmotionSensorReader::ReadData);
+    config_connection = connect(poll_timer, &QTimer::timeout, this, &QBaseSerialWitmotionSensorReader::Configure);
     ttyout << "Instantiating timer at " << poll_timer->interval() << " ms" << endl;
     poll_timer->start();
 }
@@ -140,6 +166,7 @@ void QBaseSerialWitmotionSensorReader::RunPoll()
 void QBaseSerialWitmotionSensorReader::Suspend()
 {
     disconnect(timer_connection);
+    disconnect(config_connection);
     if(poll_timer != nullptr)
         delete poll_timer;
     if(witmotion_port != nullptr)
