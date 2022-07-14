@@ -129,7 +129,7 @@ int main(int argc, char** args)
 
     QCoreApplication app(argc, args);
     QCommandLineParser parser;
-    parser.setApplicationDescription("WITMOTION UART MESSAGE ENUMERATOR BY TWDRAGON");
+    parser.setApplicationDescription("WITMOTION UART MESSAGE ENUMERATOR BY TWDRAGON\nPress Ctrl+C to stop enumeration and see the report");
     parser.addHelpOption();
     QCommandLineOption BaudRateOption(QStringList() << "b" << "baudrate",
                                       "Baudrate to set up the port",
