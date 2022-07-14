@@ -7,6 +7,8 @@
 #include <QtCore>
 #include <QSerialPort>
 
+#include <list>
+
 namespace witmotion
 {
 
