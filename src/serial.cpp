@@ -80,7 +80,7 @@ void QBaseSerialWitmotionSensorReader::Configure()
         serial_datapacket[3] = packet.setting.raw[0];
         serial_datapacket[4] = packet.setting.raw[1];
         quint64 written;
-        ttyout << "Sending configuration packet " << hex << "0x" << packet.address_byte << dec << endl;
+        ttyout << "Sending configuration packet " << Qt::hex << "0x" << packet.address_byte << Qt::dec << Qt::endl;
         written = witmotion_port->write(reinterpret_cast<const char*>(serial_datapacket), 5);
         witmotion_port->waitForBytesWritten();
         if(written != 5)
@@ -88,7 +88,7 @@ void QBaseSerialWitmotionSensorReader::Configure()
             error = true;
             break;
         }
-        ttyout << "Configuration packet sent, flushing buffers..." << endl;
+        ttyout << "Configuration packet sent, flushing buffers..." << Qt::endl;
         witmotion_port->flush();
     }
     ttyout << "Configuration completed" << Qt::endl;
@@ -130,7 +130,7 @@ QBaseSerialWitmotionSensorReader::~QBaseSerialWitmotionSensorReader()
 {
     if(poll_timer != nullptr)
         delete poll_timer;
-    ttyout << "Closing TTL connection" << endl;
+    ttyout << "Closing TTL connection" << Qt::endl;
     if(witmotion_port != nullptr)
     {
         witmotion_port->close();
@@ -145,7 +145,7 @@ void QBaseSerialWitmotionSensorReader::RunPoll()
     witmotion_port->setStopBits(QSerialPort::OneStop);
     witmotion_port->setParity(QSerialPort::NoParity);
     witmotion_port->setFlowControl(QSerialPort::FlowControl::NoFlowControl);
-    ttyout << "Opening device \"" << witmotion_port->portName() << "\" at " << witmotion_port->baudRate() << " baud" << endl;
+    ttyout << "Opening device \"" << witmotion_port->portName() << "\" at " << witmotion_port->baudRate() << " baud" << Qt::endl;
     if(!witmotion_port->open(QIODevice::ReadWrite))
     {
         emit Error("Error opening the port!");
@@ -159,7 +159,7 @@ void QBaseSerialWitmotionSensorReader::RunPoll()
         poll_timer->setInterval(return_interval);
     timer_connection = connect(poll_timer, &QTimer::timeout, this, &QBaseSerialWitmotionSensorReader::ReadData);
     config_connection = connect(poll_timer, &QTimer::timeout, this, &QBaseSerialWitmotionSensorReader::Configure);
-    ttyout << "Instantiating timer at " << poll_timer->interval() << " ms" << endl;
+    ttyout << "Instantiating timer at " << poll_timer->interval() << " ms" << Qt::endl;
     poll_timer->start();
 }
 
@@ -174,7 +174,7 @@ void QBaseSerialWitmotionSensorReader::Suspend()
         witmotion_port->close();
         delete witmotion_port;
     }
-    ttyout << "Suspending TTL connection, please emit RunPoll() again to proceed!" << endl;
+    ttyout << "Suspending TTL connection, please emit RunPoll() again to proceed!" << Qt::endl;
     poll_timer = nullptr;
     witmotion_port = nullptr;
 }
@@ -231,7 +231,7 @@ void QAbstractWitmotionSensorController::Packet(const witmotion_datapacket &pack
 
 void QAbstractWitmotionSensorController::Error(const QString &description)
 {
-    ttyout << "Internal error occurred. Suspending the reader thread. Please check the sensor!" << endl;
+    ttyout << "Internal error occurred. Suspending the reader thread. Please check the sensor!" << Qt::endl;
     reader->Suspend();
     emit ErrorOccurred(description);
 }

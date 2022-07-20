@@ -78,7 +78,7 @@ QWitmotionWT31NSensor::QWitmotionWT31NSensor(const QString device,
            << " at "
            << static_cast<int32_t>(port_rate)
            << " baud"
-           << endl;
+           << Qt::endl;
     reader->SetSensorPollInterval(polling_period);
 }
 
@@ -89,7 +89,7 @@ const std::set<witmotion_packet_id> *QWitmotionWT31NSensor::RegisteredPacketType
 
 void QWitmotionWT31NSensor::Start()
 {
-    ttyout << "Running reader thread" << endl;
+    ttyout << "Running reader thread" << Qt::endl;
     if(!((port_rate == QSerialPort::Baud9600) || (port_rate == QSerialPort::Baud115200)))
         emit ErrorOccurred("Only 9600 or 115200 baud rates are supported for WT31N!");
     else
