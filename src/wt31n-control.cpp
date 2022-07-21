@@ -104,7 +104,7 @@ int main(int argc, char** args)
     uint32_t interval = parser.value(IntervalOption).toUInt();
     if(interval < 5)
     {
-        std::cout << "Wrong port polling interval specified, falling mack to 50 ms!" << std::endl;
+        std::cout << "Wrong port polling interval specified, falling back to 50 ms!" << std::endl;
         interval = 50;
     }
     QWitmotionWT31NSensor sensor(device, rate, interval);

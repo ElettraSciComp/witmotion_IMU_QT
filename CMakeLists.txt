@@ -74,6 +74,21 @@ add_executable(witmotionctl-wt31n
     )
 target_link_libraries(witmotionctl-wt31n witmotion-wt31n)
 
+# WT901
+qt5_wrap_cpp(MOC_WT901
+    include/witmotion/wt901-uart.h
+    )
+add_library(witmotion-wt901 SHARED
+    ${MOC_WT901}
+    src/wt901-uart.cpp
+    )
+target_link_libraries(witmotion-wt901 witmotion-uart)
+add_executable(witmotionctl-wt901
+    ${MOC_WT901}
+    src/wt901-control.cpp
+    )
+target_link_libraries(witmotionctl-wt901 witmotion-wt901)
+
 # EXAMPLES
 if(BUILD_EXAMPLES)
     add_executable(wt31n-calibration
