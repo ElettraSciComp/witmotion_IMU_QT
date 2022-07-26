@@ -22,7 +22,7 @@ const std::set<witmotion_packet_id> *QWitmotionWT901Sensor::RegisteredPacketType
 
 void QWitmotionWT901Sensor::Start()
 {
-    ttyout << "Running reader thread" << Qt::endl;
+    ttyout << "Running reader thread" << ENDL;
     emit RunReader();
 }
 
@@ -80,7 +80,7 @@ QWitmotionWT901Sensor::QWitmotionWT901Sensor(const QString device,
            << " at "
            << static_cast<int32_t>(port_rate)
            << " baud"
-           << Qt::endl;
+           << ENDL;
     reader->SetSensorPollInterval(polling_period);
 }
 

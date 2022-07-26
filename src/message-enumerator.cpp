@@ -59,14 +59,14 @@ QGeneralSensorController::~QGeneralSensorController()
 
     BuildLog();
     for(auto i = log.begin(); i != log.end(); i++)
-        ttyout << *i << Qt::endl;
+        ttyout << *i << ENDL;
 
     if(logfile != nullptr)
     {
         QTextStream logstream(logfile);
         for(auto i = log.begin(); i != log.end(); i++)
-            logstream << *i << Qt::endl;
-        ttyout << "Log file written to " << logfile->fileName() << Qt::endl;
+            logstream << *i << ENDL;
+        ttyout << "Log file written to " << logfile->fileName() << ENDL;
         logfile->close();
         delete logfile;
     }
@@ -84,7 +84,7 @@ void QGeneralSensorController::SetLog(const QString name)
     logfile = new QFile(name);
     if(!logfile->open(QFile::Truncate|QFile::WriteOnly|QFile::Text))
     {
-        ttyout << "ERROR: cannot open logfile! Proceeding without a log" << Qt::endl;
+        ttyout << "ERROR: cannot open logfile! Proceeding without a log" << ENDL;
         log_set = false;
     }
 }
@@ -109,7 +109,7 @@ void QGeneralSensorController::Packet(const witmotion_datapacket &packet)
 
 void QGeneralSensorController::Error(const QString &description)
 {
-    ttyout << "ERROR: " << description << Qt::endl;
+    ttyout << "ERROR: " << description << ENDL;
     QCoreApplication::exit(1);
 }
 
