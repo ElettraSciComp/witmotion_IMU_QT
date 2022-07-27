@@ -103,7 +103,7 @@ void QGeneralSensorController::Packet(const witmotion_datapacket &packet)
     {
         unknown_ids++;
         unknown.insert(packet.id_byte);
-        ttyout << ", unknown ID 0x" << Qt::hex << packet.id_byte;
+        ttyout << ", unknown ID 0x" << HEX << packet.id_byte;
     }
 }
 
