@@ -63,12 +63,12 @@ int main(int argc, char** args)
     QCommandLineOption CalibrateOption("calibrate",
                                        "Run spatial calibration");
     QCommandLineOption SetBaudRateOption(QStringList() << "set-baudrate",
-                                         "Reset the connection baud rate and polling interval",
-                                         "9600 or 115200",
+                                         "Reset the connection baud rate",
+                                         "2400, 4800, 9600, 19200, 38400, 57600, 115200",
                                          "9600");
     QCommandLineOption SetPollingRateOption(QStringList() << "set-frequency",
-                                            "Set output polling frequency",
-                                            "10 or 100 Hz",
+                                            "Set output polling frequency, Hz",
+                                            "-10 for 0.1, -2 for 0.5, 1, 2, 5, 10, 20, 50, 100, 125, 200, 0 for stop, -1 for single shot",
                                             "10");
     QCommandLineOption CovarianceOption("covariance",
                                         "Measure spatial covariance");
@@ -84,8 +84,8 @@ int main(int argc, char** args)
     parser.addOption(LogOption);
     parser.process(app);
 
-    QSerialPort::BaudRate rate;
-    QString device;
+    QSerialPort::BaudRate rate = static_cast<QSerialPort::BaudRate>(parser.value(BaudRateOption).toUInt());
+    QString device = parser.value(DeviceNameOption);
 
     // Creating the sensor handler
     uint32_t interval = parser.value(IntervalOption).toUInt();
@@ -97,11 +97,89 @@ int main(int argc, char** args)
     QWitmotionWT901Sensor sensor(device, rate, interval);
     sensor.SetValidation(parser.isSet(ValidateOption));
 
+    // Setting up data capturing slots: mutable/immutable C++14 lambda functions
     QObject::connect(&sensor, &QWitmotionWT901Sensor::ErrorOccurred, [](const QString description)
     {
         std::cout << "ERROR: " << description.toStdString() << std::endl;
         QCoreApplication::exit(1);
     });
+
+
+    // Start acquisition
+    sensor.Start();
+
+    // Rendering control packets
+    sleep(1);
+    if(parser.isSet(CalibrateOption))
+    {
+        std::cout << "Entering CALIBRATION mode"
+                  << std::endl
+                  << "PLEASE KEEP THE SENSOR STATIC ON THE HORIZONTAL SURFACE!!!"
+                  << std::endl
+                  << "Calibration starts in "
+                  << std::endl;
+        for(size_t i = 5; i >= 1; i--)
+        {
+            std::cout << i << std::endl;
+            sleep(1);
+        }
+        std::cout << std::endl << "Calibrating..." << std::endl;
+        sensor.Calibrate();
+        sensor.ConfirmConfiguration();
+        sleep(1);
+        std::cout << "Calibration completed. Please reconnect now" << std::endl;
+        std::exit(0);
+    }
+
+    if(parser.isSet(SetBaudRateOption))
+    {
+        uint32_t new_rate = parser.value(SetBaudRateOption).toUInt();
+        if(!((new_rate == 2400) ||
+             (new_rate == 4800) ||
+             (new_rate == 9600) ||
+             (new_rate == 19200) ||
+             (new_rate == 38400) ||
+             (new_rate == 57600) ||
+             (new_rate == 115200) ))
+            std::cout << "ERROR: Wrong baudrate setting (use --help for detailed information). Ignoring baudrate reconfiguration request." << std::endl;
+        else
+        {
+            std::cout << "Configuring baudrate. NOTE: Please reconnect the sensor after this operation with the proper baudrate setting!" << std::endl;
+            sensor.SetBaudRate(static_cast<QSerialPort::BaudRate>(new_rate));
+            sensor.ConfirmConfiguration();
+            sleep(1);
+            std::cout << "Reconfiguration completed. Please reconnect now" << std::endl;
+            std::exit(0);
+        }
+    }
+
+    if(parser.isSet(SetPollingRateOption))
+    {
+        int32_t new_poll = parser.value(SetPollingRateOption).toInt();
+        if(!((new_poll == -10) ||
+             (new_poll == -2) ||
+             (new_poll == -1) ||
+             (new_poll == 0) ||
+             (new_poll == 1) ||
+             (new_poll == 2) ||
+             (new_poll == 5) ||
+             (new_poll == 10) ||
+             (new_poll == 20) ||
+             (new_poll == 50) ||
+             (new_poll == 100) ||
+             (new_poll == 125) ||
+             (new_poll == 200) ))
+            std::cout << "ERROR: Wrong output frequency setting (use --help for detailed information). Ignoring output frequency reconfiguration request." << std::endl;
+        else
+        {
+            std::cout << "Configuring output frequency. NOTE: Please reconnect the sensor after this operation with the proper setting!" << std::endl;
+            sensor.SetPollingRate(new_poll);
+            sensor.ConfirmConfiguration();
+            sleep(1);
+            std::cout << "Reconfiguration completed. Please reconnect now" << std::endl;
+            std::exit(0);
+        }
+    }
 
     int result = app.exec();
 

@@ -49,7 +49,7 @@ void QWitmotionWT901Sensor::SetBaudRate(const QSerialPort::BaudRate &rate)
     emit SendConfig(config_packet);
 }
 
-void QWitmotionWT901Sensor::SetPollingRate(const uint32_t hz)
+void QWitmotionWT901Sensor::SetPollingRate(const int32_t hz)
 {
     witmotion_config_packet config_packet;
     config_packet.header_byte = WITMOTION_CONFIG_HEADER;
@@ -67,6 +67,7 @@ void QWitmotionWT901Sensor::ConfirmConfiguration()
     config_packet.key_byte = WITMOTION_CONFIG_KEY;
     config_packet.address_byte = ridSaveSettings;
     config_packet.setting.raw[0] = 0x00;
+    config_packet.setting.raw[1] = 0x00;
     emit SendConfig(config_packet);
 }
 
