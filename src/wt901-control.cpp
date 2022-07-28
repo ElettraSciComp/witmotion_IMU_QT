@@ -45,12 +45,13 @@ int main(int argc, char** args)
     sigaction(SIGINT, &sigIntHandler, NULL);
 
     QCoreApplication app(argc, args);
+    app.setApplicationVersion(QString(witmotion::library_version().c_str()));
     QCommandLineParser parser;
     parser.setApplicationDescription("WITMOTION WT901 STANDALONE SENSOR CONTROLLER/MONITOR");
     parser.addHelpOption();
     QCommandLineOption BaudRateOption(QStringList() << "b" << "baudrate",
                                       "Baudrate to set up the port",
-                                      "9600 or 115200",
+                                      "2400 to 115200",
                                       "9600");
     QCommandLineOption IntervalOption(QStringList() << "i" << "interval",
                                       "Port polling interval",
@@ -66,11 +67,11 @@ int main(int argc, char** args)
                                        "Run spatial calibration");
     QCommandLineOption SetBaudRateOption(QStringList() << "set-baudrate",
                                          "Reset the connection baud rate",
-                                         "2400, 4800, 9600, 19200, 38400, 57600, 115200",
+                                         "2400 to 115200",
                                          "9600");
     QCommandLineOption SetPollingRateOption(QStringList() << "set-frequency",
                                             "Set output polling frequency, Hz",
-                                            "-10 for 0.1, -2 for 0.5, 1-200, 0 for stop, -1 for single shot",
+                                            "1 - 200 Hz",
                                             "10");
     QCommandLineOption CovarianceOption("covariance",
                                         "Measure spatial covariance");
@@ -226,8 +227,8 @@ int main(int argc, char** args)
         std::cout << std::endl << "Calibrating..." << std::endl;
         sensor.UnlockConfiguration();
         sensor.Calibrate();
+        sleep(5);
         sensor.ConfirmConfiguration();
-        sleep(1);
         std::cout << "Calibration completed. Please reconnect now" << std::endl;
         std::exit(0);
     }
@@ -342,8 +343,7 @@ int main(int argc, char** args)
                         << accels_y[i] << " | "
                         << accels_z[i] << " ]"
                         << std::endl;
-                logfile << i + 1 << "\t"
-                        << "Angular velocities [X|Y|Z]:\t[ "
+                logfile << "Angular velocities [X|Y|Z]:\t[ "
                         << vels_x[i] << " | "
                         << vels_y[i] << " | "
                         << vels_z[i] << " ]"

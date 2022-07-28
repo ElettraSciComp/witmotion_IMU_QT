@@ -43,6 +43,7 @@ int main(int argc, char** args)
     sigaction(SIGINT, &sigIntHandler, NULL);
 
     QCoreApplication app(argc, args);
+    app.setApplicationVersion(QString(witmotion::library_version().c_str()));
     QCommandLineParser parser;
     parser.setApplicationDescription("WITMOTION WT31N STANDALONE SENSOR CONTROLLER/MONITOR");
     parser.addHelpOption();
