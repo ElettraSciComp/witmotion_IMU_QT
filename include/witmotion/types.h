@@ -186,7 +186,9 @@ enum witmotion_config_register_id
     ridSetOrientationZ = 0x53,
     ridSetOrientationW = 0x54,
 
-    ridGyroscopeAutoCalibrate = 0x63
+    ridGyroscopeAutoCalibrate = 0x63,
+
+    ridUnlockConfiguration = 0x69
 };
 
 /*!

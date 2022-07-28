@@ -15,6 +15,19 @@ const std::set<witmotion_packet_id> QWitmotionWT901Sensor::registered_types =
     pidMagnetometer
 };
 
+void QWitmotionWT901Sensor::UnlockConfiguration()
+{
+    witmotion_config_packet config_packet;
+    config_packet.header_byte = WITMOTION_CONFIG_HEADER;
+    config_packet.key_byte = WITMOTION_CONFIG_KEY;
+    config_packet.address_byte = ridUnlockConfiguration;
+    config_packet.setting.raw[0] = 0x88;
+    config_packet.setting.raw[1] = 0xB5;
+    ttyout << "Configuration ROM: lock removal started" << ENDL;
+    emit SendConfig(config_packet);
+    sleep(1);
+}
+
 const std::set<witmotion_packet_id> *QWitmotionWT901Sensor::RegisteredPacketTypes()
 {
     return &registered_types;
@@ -34,7 +47,13 @@ void QWitmotionWT901Sensor::Calibrate()
     config_packet.address_byte = ridCalibrate;
     config_packet.setting.raw[0] = 0x01;
     config_packet.setting.raw[1] = 0x00;
+    ttyout << "Entering spatial calibration, please hold the sensor in fixed position for 5 seconds" << ENDL;
     emit SendConfig(config_packet);
+    sleep(5);
+    config_packet.setting.raw[0] = 0x00;
+    ttyout << "Exiting spatial calibration mode" << ENDL;
+    emit SendConfig(config_packet);
+    sleep(1);
 }
 
 void QWitmotionWT901Sensor::SetBaudRate(const QSerialPort::BaudRate &rate)
@@ -47,6 +66,7 @@ void QWitmotionWT901Sensor::SetBaudRate(const QSerialPort::BaudRate &rate)
     config_packet.setting.raw[0] = witmotion_baud_rate(port_rate);
     config_packet.setting.raw[1] = 0x00;
     emit SendConfig(config_packet);
+    sleep(1);
 }
 
 void QWitmotionWT901Sensor::SetPollingRate(const int32_t hz)
@@ -58,6 +78,7 @@ void QWitmotionWT901Sensor::SetPollingRate(const int32_t hz)
     config_packet.setting.raw[0] = witmotion_output_frequency(hz);
     config_packet.setting.raw[1] = 0x00;
     emit SendConfig(config_packet);
+    sleep(1);
 }
 
 void QWitmotionWT901Sensor::ConfirmConfiguration()
@@ -69,6 +90,7 @@ void QWitmotionWT901Sensor::ConfirmConfiguration()
     config_packet.setting.raw[0] = 0x00;
     config_packet.setting.raw[1] = 0x00;
     emit SendConfig(config_packet);
+    sleep(1);
 }
 
 QWitmotionWT901Sensor::QWitmotionWT901Sensor(const QString device,

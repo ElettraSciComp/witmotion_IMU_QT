@@ -26,6 +26,7 @@ private:
 public:
     virtual const std::set<witmotion_packet_id>* RegisteredPacketTypes();
     virtual void Start();
+    virtual void UnlockConfiguration();
     virtual void Calibrate();
     virtual void SetBaudRate(const QSerialPort::BaudRate& rate);
     virtual void SetPollingRate(const int32_t hz);

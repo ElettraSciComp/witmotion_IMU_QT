@@ -233,6 +233,10 @@ int main(int argc, char** args)
     std::cout << "Waiting for the first packet acquired..." << std::endl;
     int result = app.exec();
 
+    std::cout << "Average sensor return rate "
+              << std::accumulate(times.begin(), times.end(), 0.f) / times.size()
+              << " s" << std::endl << std::endl;
+
     if(covariance)
     {
         std::cout << "Calculating noise covariance matrices..." << std::endl
