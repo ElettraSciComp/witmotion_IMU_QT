@@ -28,8 +28,10 @@ public:
     virtual void Start();
     virtual void UnlockConfiguration();
     virtual void Calibrate();
+    virtual void CalibrateMagnetometer();
     virtual void SetBaudRate(const QSerialPort::BaudRate& rate);
     virtual void SetPollingRate(const int32_t hz);
+    virtual void SetOrientation(const bool vertical = false);
     virtual void ConfirmConfiguration();
     QWitmotionWT901Sensor(const QString device,
                           const QSerialPort::BaudRate rate,

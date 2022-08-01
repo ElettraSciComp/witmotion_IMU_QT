@@ -53,38 +53,49 @@ int main(int argc, char** args)
                                       "Baudrate to set up the port",
                                       "2400 to 115200",
                                       "9600");
+    parser.addOption(BaudRateOption);
     QCommandLineOption IntervalOption(QStringList() << "i" << "interval",
                                       "Port polling interval",
                                       "50 ms",
                                       "50");
+    parser.addOption(IntervalOption);
     QCommandLineOption DeviceNameOption(QStringList() << "d" << "device",
                                         "Port serial device name, without \'/dev\'",
                                         "ttyUSB0",
                                         "ttyUSB0");
+    parser.addOption(DeviceNameOption);
     QCommandLineOption ValidateOption("validate",
                                       "Accept only valid datapackets");
-    QCommandLineOption CalibrateOption("calibrate",
-                                       "Run spatial calibration");
+    parser.addOption(ValidateOption);
     QCommandLineOption SetBaudRateOption(QStringList() << "set-baudrate",
                                          "Reset the connection baud rate",
                                          "2400 to 115200",
                                          "9600");
+    parser.addOption(SetBaudRateOption);
     QCommandLineOption SetPollingRateOption(QStringList() << "set-frequency",
                                             "Set output polling frequency, Hz",
                                             "1 - 200 Hz",
                                             "10");
+    parser.addOption(SetPollingRateOption);
     QCommandLineOption CovarianceOption("covariance",
                                         "Measure spatial covariance");
-    QCommandLineOption LogOption("log", "Log acquisition to sensor.log file");
-    parser.addOption(BaudRateOption);
-    parser.addOption(IntervalOption);
-    parser.addOption(DeviceNameOption);
-    parser.addOption(ValidateOption);
-    parser.addOption(CalibrateOption);
     parser.addOption(CovarianceOption);
-    parser.addOption(SetBaudRateOption);
-    parser.addOption(SetPollingRateOption);
+    QCommandLineOption LogOption("log", "Log acquisition to sensor.log file");
     parser.addOption(LogOption);
+
+    QCommandLineOption CalibrateOption("calibrate",
+                                       "Run spatial calibration");
+    parser.addOption(CalibrateOption);
+    QCommandLineOption MagnetometerCalibrateOption("calibrate-magnetometer",
+                                       "Run magnetic calibration");
+    parser.addOption(MagnetometerCalibrateOption);
+    QCommandLineOption BaseHorizontalOrientationOption("set-horizontal",
+                                                       "Set HORIZONTAL as basic spatial orientation");
+    parser.addOption(BaseHorizontalOrientationOption);
+    QCommandLineOption BaseVerticalOrientationOption("set-vertical",
+                                                     "Set VERTICAL as basic spatial orientation");
+    parser.addOption(BaseVerticalOrientationOption);
+
     parser.process(app);
 
     QSerialPort::BaudRate rate = static_cast<QSerialPort::BaudRate>(parser.value(BaudRateOption).toUInt());
@@ -213,7 +224,7 @@ int main(int argc, char** args)
     sleep(1);
     if(parser.isSet(CalibrateOption))
     {
-        std::cout << "Entering CALIBRATION mode"
+        std::cout << "Entering SPATIAL CALIBRATION mode"
                   << std::endl
                   << "PLEASE KEEP THE SENSOR STATIC ON THE HORIZONTAL SURFACE!!!"
                   << std::endl
@@ -227,6 +238,28 @@ int main(int argc, char** args)
         std::cout << std::endl << "Calibrating..." << std::endl;
         sensor.UnlockConfiguration();
         sensor.Calibrate();
+        sleep(5);
+        sensor.ConfirmConfiguration();
+        std::cout << "Calibration completed. Please reconnect now" << std::endl;
+        std::exit(0);
+    }
+
+    if(parser.isSet(MagnetometerCalibrateOption))
+    {
+        std::cout << "Entering MAGNETIC CALIBRATION mode"
+                  << std::endl
+                  << "PLEASE KEEP THE SENSOR STATIC ON THE HORIZONTAL SURFACE!!!"
+                  << std::endl
+                  << "Calibration starts in "
+                  << std::endl;
+        for(size_t i = 5; i >= 1; i--)
+        {
+            std::cout << i << std::endl;
+            sleep(1);
+        }
+        std::cout << std::endl << "Calibrating..." << std::endl;
+        sensor.UnlockConfiguration();
+        sensor.CalibrateMagnetometer();
         sleep(5);
         sensor.ConfirmConfiguration();
         std::cout << "Calibration completed. Please reconnect now" << std::endl;
@@ -283,6 +316,24 @@ int main(int argc, char** args)
             std::exit(0);
         }
     }
+
+    if(parser.isSet(BaseVerticalOrientationOption) ||
+            parser.isSet(BaseHorizontalOrientationOption))
+    {
+        std::cout << "Non-blocking configuration, please wait..." << std::endl;
+        sensor.UnlockConfiguration();
+        if(parser.isSet(BaseVerticalOrientationOption) &&
+                parser.isSet(BaseHorizontalOrientationOption))
+            std::cout << "WARNING: You set both VERTICAL and HORIZONTAL base orientation settings. Assume that VERTICAL orientation is used to be set" << std::endl;
+        if(parser.isSet(BaseVerticalOrientationOption) ||
+                parser.isSet(BaseHorizontalOrientationOption))
+        {
+            sensor.SetOrientation(parser.isSet(BaseVerticalOrientationOption));
+        }
+        sensor.ConfirmConfiguration();
+        std::cout << "Reconfiguration, completed, proceeding to normal operation" << std::endl << std::endl;
+    }
+
     maintenance = false;
 
     int result = app.exec();

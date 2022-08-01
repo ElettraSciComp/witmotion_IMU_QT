@@ -56,6 +56,23 @@ void QWitmotionWT901Sensor::Calibrate()
     sleep(1);
 }
 
+void QWitmotionWT901Sensor::CalibrateMagnetometer()
+{
+    witmotion_config_packet config_packet;
+    config_packet.header_byte = WITMOTION_CONFIG_HEADER;
+    config_packet.key_byte = WITMOTION_CONFIG_KEY;
+    config_packet.address_byte = ridCalibrate;
+    config_packet.setting.raw[0] = 0x02;
+    config_packet.setting.raw[1] = 0x00;
+    ttyout << "Entering magnetic calibration, please hold the sensor in fixed position for 5 seconds" << ENDL;
+    emit SendConfig(config_packet);
+    sleep(5);
+    config_packet.setting.raw[0] = 0x00;
+    ttyout << "Exiting magnetic calibration mode" << ENDL;
+    emit SendConfig(config_packet);
+    sleep(1);
+}
+
 void QWitmotionWT901Sensor::SetBaudRate(const QSerialPort::BaudRate &rate)
 {
     witmotion_config_packet config_packet;
@@ -88,6 +105,18 @@ void QWitmotionWT901Sensor::ConfirmConfiguration()
     config_packet.key_byte = WITMOTION_CONFIG_KEY;
     config_packet.address_byte = ridSaveSettings;
     config_packet.setting.raw[0] = 0x00;
+    config_packet.setting.raw[1] = 0x00;
+    emit SendConfig(config_packet);
+    sleep(1);
+}
+
+void QWitmotionWT901Sensor::SetOrientation(const bool vertical)
+{
+    witmotion_config_packet config_packet;
+    config_packet.header_byte = WITMOTION_CONFIG_HEADER;
+    config_packet.key_byte = WITMOTION_CONFIG_KEY;
+    config_packet.address_byte = ridInstallationDirection;
+    config_packet.setting.raw[0] = vertical ? 0x01 : 0x00;
     config_packet.setting.raw[1] = 0x00;
     emit SendConfig(config_packet);
     sleep(1);
