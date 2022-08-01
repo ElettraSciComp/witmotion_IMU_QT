@@ -12,7 +12,9 @@ const std::set<witmotion_packet_id> QWitmotionWT901Sensor::registered_types =
     pidAcceleration,
     pidAngularVelocity,
     pidAngles,
-    pidMagnetometer
+    pidMagnetometer,
+    pidOrientation,
+    pidRTC
 };
 
 void QWitmotionWT901Sensor::UnlockConfiguration()
@@ -117,6 +119,54 @@ void QWitmotionWT901Sensor::SetOrientation(const bool vertical)
     config_packet.key_byte = WITMOTION_CONFIG_KEY;
     config_packet.address_byte = ridInstallationDirection;
     config_packet.setting.raw[0] = vertical ? 0x01 : 0x00;
+    config_packet.setting.raw[1] = 0x00;
+    emit SendConfig(config_packet);
+    sleep(1);
+}
+
+void QWitmotionWT901Sensor::ToggleDormant()
+{
+    witmotion_config_packet config_packet;
+    config_packet.header_byte = WITMOTION_CONFIG_HEADER;
+    config_packet.key_byte = WITMOTION_CONFIG_KEY;
+    config_packet.address_byte = ridStandbyMode;
+    config_packet.setting.raw[0] = 0x01;
+    config_packet.setting.raw[1] = 0x00;
+    emit SendConfig(config_packet);
+    sleep(1);
+}
+
+void QWitmotionWT901Sensor::SetGyroscopeAutoRecalibration(const bool recalibrate)
+{
+    witmotion_config_packet config_packet;
+    config_packet.header_byte = WITMOTION_CONFIG_HEADER;
+    config_packet.key_byte = WITMOTION_CONFIG_KEY;
+    config_packet.address_byte = ridGyroscopeAutoCalibrate;
+    config_packet.setting.raw[0] = recalibrate ? 0x00 : 0x01;
+    config_packet.setting.raw[1] = 0x00;
+    emit SendConfig(config_packet);
+    sleep(1);
+}
+
+void QWitmotionWT901Sensor::SetAxisTransition(const bool axis9)
+{
+    witmotion_config_packet config_packet;
+    config_packet.header_byte = WITMOTION_CONFIG_HEADER;
+    config_packet.key_byte = WITMOTION_CONFIG_KEY;
+    config_packet.address_byte = ridTransitionAlgorithm;
+    config_packet.setting.raw[0] = axis9 ? 0x00 : 0x01;
+    config_packet.setting.raw[1] = 0x00;
+    emit SendConfig(config_packet);
+    sleep(1);
+}
+
+void QWitmotionWT901Sensor::SetLED(const bool on)
+{
+    witmotion_config_packet config_packet;
+    config_packet.header_byte = WITMOTION_CONFIG_HEADER;
+    config_packet.key_byte = WITMOTION_CONFIG_KEY;
+    config_packet.address_byte = ridLED;
+    config_packet.setting.raw[0] = on ? 0x00 : 0x01;
     config_packet.setting.raw[1] = 0x00;
     emit SendConfig(config_packet);
     sleep(1);

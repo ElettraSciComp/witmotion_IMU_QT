@@ -95,6 +95,29 @@ int main(int argc, char** args)
     QCommandLineOption BaseVerticalOrientationOption("set-vertical",
                                                      "Set VERTICAL as basic spatial orientation");
     parser.addOption(BaseVerticalOrientationOption);
+    QCommandLineOption DormantOption("dormant",
+                                     "Toggle dormancy mode, only for support test");
+    parser.addOption(DormantOption);
+    QCommandLineOption GyroscopeAutoRecalibrateOption("gyroscope-auto-recalibrate",
+                                                      "Turn on or off gyroscope auto recalibration",
+                                                      "on / off",
+                                                      "on");
+    parser.addOption(GyroscopeAutoRecalibrateOption);
+    QCommandLineOption AxisTransitionOption("transition-axis",
+                                            "Fusion axis number, 9 by default",
+                                            "6 or 9",
+                                            "9");
+    parser.addOption(AxisTransitionOption);
+    QCommandLineOption LEDOption("led",
+                                 "Turn on or off sensor's internal LED indication",
+                                 "on / off",
+                                 "on");
+    parser.addOption(LEDOption);
+    QCommandLineOption EnableAccelerationOption("enable-acceleration",
+                                                "Turn on or off acceleration measurement",
+                                                "on / off",
+                                                "on");
+    parser.addOption(EnableAccelerationOption);
 
     parser.process(app);
 
@@ -318,7 +341,12 @@ int main(int argc, char** args)
     }
 
     if(parser.isSet(BaseVerticalOrientationOption) ||
-            parser.isSet(BaseHorizontalOrientationOption))
+            parser.isSet(BaseHorizontalOrientationOption) ||
+            parser.isSet(DormantOption) ||
+            parser.isSet(GyroscopeAutoRecalibrateOption) ||
+            parser.isSet(AxisTransitionOption) ||
+            parser.isSet(LEDOption) ||
+            parser.isSet(EnableAccelerationOption))
     {
         std::cout << "Non-blocking configuration, please wait..." << std::endl;
         sensor.UnlockConfiguration();
@@ -327,9 +355,26 @@ int main(int argc, char** args)
             std::cout << "WARNING: You set both VERTICAL and HORIZONTAL base orientation settings. Assume that VERTICAL orientation is used to be set" << std::endl;
         if(parser.isSet(BaseVerticalOrientationOption) ||
                 parser.isSet(BaseHorizontalOrientationOption))
-        {
             sensor.SetOrientation(parser.isSet(BaseVerticalOrientationOption));
+        if(parser.isSet(DormantOption))
+            sensor.ToggleDormant();
+        if(parser.isSet(GyroscopeAutoRecalibrateOption))
+        {
+            if(parser.value(GyroscopeAutoRecalibrateOption).toUpper() == "ON")
+                sensor.SetGyroscopeAutoRecalibration(true);
+            else if(parser.value(GyroscopeAutoRecalibrateOption).toUpper() == "OFF")
+                sensor.SetGyroscopeAutoRecalibration(false);
+            else
+            {
+                std::cout << "WARNING: unknown value for option, assuming ON" << std::endl;
+                sensor.SetGyroscopeAutoRecalibration(true);
+            }
         }
+        if(parser.isSet(AxisTransitionOption))
+            sensor.SetAxisTransition(parser.value(AxisTransitionOption).toInt() == 6);
+        if(parser.isSet(LEDOption))
+            sensor.SetLED(!(parser.value(LEDOption).toUpper() == "OFF"));
+        // TODO: Implement measurement content settings
         sensor.ConfirmConfiguration();
         std::cout << "Reconfiguration, completed, proceeding to normal operation" << std::endl << std::endl;
     }

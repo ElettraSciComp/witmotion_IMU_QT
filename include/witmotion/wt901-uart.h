@@ -32,6 +32,10 @@ public:
     virtual void SetBaudRate(const QSerialPort::BaudRate& rate);
     virtual void SetPollingRate(const int32_t hz);
     virtual void SetOrientation(const bool vertical = false);
+    virtual void ToggleDormant();
+    virtual void SetGyroscopeAutoRecalibration(const bool recalibrate = true);
+    virtual void SetAxisTransition(const bool axis9 = true);
+    virtual void SetLED(const bool on = true);
     virtual void ConfirmConfiguration();
     QWitmotionWT901Sensor(const QString device,
                           const QSerialPort::BaudRate rate,
