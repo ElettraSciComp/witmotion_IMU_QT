@@ -36,6 +36,12 @@ public:
     virtual void SetGyroscopeAutoRecalibration(const bool recalibrate = true);
     virtual void SetAxisTransition(const bool axis9 = true);
     virtual void SetLED(const bool on = true);
+    virtual void SetMeasurements(const bool realtime_clock = false,
+                                 const bool acceleration = true,
+                                 const bool angular_velocity = true,
+                                 const bool euler_angles = true,
+                                 const bool magnetometer = true,
+                                 const bool orientation = false);
     virtual void ConfirmConfiguration();
     QWitmotionWT901Sensor(const QString device,
                           const QSerialPort::BaudRate rate,

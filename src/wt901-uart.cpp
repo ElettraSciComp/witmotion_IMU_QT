@@ -172,6 +172,31 @@ void QWitmotionWT901Sensor::SetLED(const bool on)
     sleep(1);
 }
 
+void QWitmotionWT901Sensor::SetMeasurements(const bool realtime_clock,
+                                            const bool acceleration,
+                                            const bool angular_velocity,
+                                            const bool euler_angles,
+                                            const bool magnetometer,
+                                            const bool orientation)
+{
+    uint8_t measurement_setting_low = 0x00;
+    uint8_t measurement_setting_high = 0x00;
+    realtime_clock ? measurement_setting_low |= 0x01 : measurement_setting_low &= ~(0x01);
+    acceleration ? measurement_setting_low |= (0x01 << 1) : measurement_setting_low &= ~(0x01 << 1);
+    angular_velocity ? measurement_setting_low |= (0x01 << 2) : measurement_setting_low &= ~(0x01 << 2);
+    euler_angles ? measurement_setting_low |= (0x01 << 3) : measurement_setting_low &= ~(0x01 << 3);
+    magnetometer ? measurement_setting_low |= (0x01 << 4) : measurement_setting_low &= ~(0x01 << 4);
+    orientation ? measurement_setting_high |= (0x01 << 1) : measurement_setting_high &= ~(0x01 << 1);
+    witmotion_config_packet config_packet;
+    config_packet.header_byte = WITMOTION_CONFIG_HEADER;
+    config_packet.key_byte = WITMOTION_CONFIG_KEY;
+    config_packet.address_byte = ridOutputValueSet;
+    config_packet.setting.raw[0] = measurement_setting_low;
+    config_packet.setting.raw[1] = measurement_setting_high;
+    emit SendConfig(config_packet);
+    sleep(1);
+}
+
 QWitmotionWT901Sensor::QWitmotionWT901Sensor(const QString device,
                                              const QSerialPort::BaudRate rate,
                                              const uint32_t polling_period):
