@@ -14,7 +14,8 @@ const std::set<witmotion_packet_id> QWitmotionWT901Sensor::registered_types =
     pidAngles,
     pidMagnetometer,
     pidOrientation,
-    pidRTC
+    pidRTC,
+    pidDataPortStatus
 };
 
 void QWitmotionWT901Sensor::UnlockConfiguration()
@@ -177,7 +178,8 @@ void QWitmotionWT901Sensor::SetMeasurements(const bool realtime_clock,
                                             const bool angular_velocity,
                                             const bool euler_angles,
                                             const bool magnetometer,
-                                            const bool orientation)
+                                            const bool orientation,
+                                            const bool port_status)
 {
     uint8_t measurement_setting_low = 0x00;
     uint8_t measurement_setting_high = 0x00;
@@ -186,6 +188,7 @@ void QWitmotionWT901Sensor::SetMeasurements(const bool realtime_clock,
     angular_velocity ? measurement_setting_low |= (0x01 << 2) : measurement_setting_low &= ~(0x01 << 2);
     euler_angles ? measurement_setting_low |= (0x01 << 3) : measurement_setting_low &= ~(0x01 << 3);
     magnetometer ? measurement_setting_low |= (0x01 << 4) : measurement_setting_low &= ~(0x01 << 4);
+    port_status ? measurement_setting_low |= (0x01 << 5) : measurement_setting_low &= ~(0x01 << 5);
     orientation ? measurement_setting_high |= (0x01 << 1) : measurement_setting_high &= ~(0x01 << 1);
     witmotion_config_packet config_packet;
     config_packet.header_byte = WITMOTION_CONFIG_HEADER;

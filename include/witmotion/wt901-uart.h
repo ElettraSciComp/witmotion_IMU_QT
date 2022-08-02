@@ -41,7 +41,8 @@ public:
                                  const bool angular_velocity = true,
                                  const bool euler_angles = true,
                                  const bool magnetometer = true,
-                                 const bool orientation = false);
+                                 const bool orientation = false,
+                                 const bool port_status = false);
     virtual void ConfirmConfiguration();
     QWitmotionWT901Sensor(const QString device,
                           const QSerialPort::BaudRate rate,

@@ -2,6 +2,8 @@
 
 #include <QCommandLineParser>
 #include <QCommandLineOption>
+#include <QString>
+#include <QStringList>
 
 #include <iostream>
 #include <iomanip>
@@ -113,11 +115,11 @@ int main(int argc, char** args)
                                  "on / off",
                                  "on");
     parser.addOption(LEDOption);
-    QCommandLineOption EnableAccelerationOption("enable-acceleration",
-                                                "Turn on or off acceleration measurement",
-                                                "on / off",
-                                                "on");
-    parser.addOption(EnableAccelerationOption);
+    QCommandLineOption DisableMeasurementOption("disable",
+                                                "Disables measurements, comma-separated list. [off], default or: acceleration, velocity, angles, orientation, rtc",
+                                                "velocity,rtc,...",
+                                                "off");
+    parser.addOption(DisableMeasurementOption);
 
     parser.process(app);
 
@@ -141,7 +143,24 @@ int main(int argc, char** args)
         QCoreApplication::exit(1);
     });
 
-    std::vector<float> accels_x, accels_y, accels_z, vels_x, vels_y, vels_z, rolls, pitches, yaws, temps, times, mags_x, mags_y, mags_z;
+    std::vector<float> accels_x,
+            accels_y,
+            accels_z,
+            vels_x,
+            vels_y,
+            vels_z,
+            rolls,
+            pitches,
+            yaws,
+            temps,
+            times,
+            mags_x,
+            mags_y,
+            mags_z,
+            quat_x,
+            quat_y,
+            quat_z,
+            quat_w;
     QObject::connect(&sensor, &QWitmotionWT901Sensor::Acquired,
                      [maintenance,
                      &accels_x,
@@ -157,7 +176,11 @@ int main(int argc, char** args)
                      &times,
                      &mags_x,
                      &mags_y,
-                     &mags_z](const witmotion::witmotion_datapacket& packet)
+                     &mags_z,
+                     &quat_x,
+                     &quat_y,
+                     &quat_z,
+                     &quat_w](const witmotion::witmotion_datapacket& packet)
     {
         if(maintenance)
             return;
@@ -165,7 +188,10 @@ int main(int argc, char** args)
         std::cout.precision(5);
         std::cout << std::fixed;
 
-        float ax, ay, az, wx, wy, wz, roll, pitch, yaw, t, mx, my, mz;
+        float ax, ay, az, wx, wy, wz, roll, pitch, yaw, t, mx, my, mz, qx, qy, qz, qw;
+        uint8_t year, month, day, hour, minute, second;
+        uint16_t millisecond;
+        QString uptime;
         static size_t packets = 1;
         static auto time_start = std::chrono::system_clock::now();
         auto time_acquisition = std::chrono::system_clock::now();
@@ -226,6 +252,52 @@ int main(int argc, char** args)
                       << my << " | "
                       << mz << " ], temp "
                       << t << " degrees, "
+                      << " in " << elapsed_seconds.count() << " s"
+                      << std::endl;
+            break;
+        case witmotion::pidRTC:
+            witmotion::decode_realtime_clock(packet, year, month, day, hour, minute, second, millisecond);
+            uptime = QString().setNum(year) + "-"
+                    + QString().setNum(month) + "-"
+                    + QString().setNum(day) + " "
+                    + QString().setNum(hour) + ":"
+                    + QString().setNum(minute) + ":"
+                    + QString().setNum(second) + "."
+                    + QString().setNum(millisecond);
+            std::cout << packets << "\t"
+                      << "Uptime / Timestamp: "
+                      << uptime.toStdString()
+                      << " in " << elapsed_seconds.count() << " s"
+                      << std::endl;
+            break;
+        case witmotion::pidOrientation:
+            witmotion::decode_orientation(packet, qx, qy, qz, qw);
+            quat_x.push_back(qx);
+            quat_y.push_back(qy);
+            quat_z.push_back(qz);
+            quat_w.push_back(qw);
+            std::cout << packets << "\t"
+                      << "Orientation quaternion [X|Y|Z|W]:\t[ "
+                      << qx << " | "
+                      << qy << " | "
+                      << qz << " | "
+                      << qw << " ]"
+                      << " in " << elapsed_seconds.count() << " s"
+                      << std::endl;
+            break;
+        case witmotion::pidDataPortStatus:
+            std::cout << packets << "\t"
+                      << "Data port status string: 0x"
+                      << std::hex
+                      << static_cast<uint32_t>(packet.datastore.raw[0]) << " 0x"
+                      << static_cast<uint32_t>(packet.datastore.raw[1]) << " 0x"
+                      << static_cast<uint32_t>(packet.datastore.raw[2]) << " 0x"
+                      << static_cast<uint32_t>(packet.datastore.raw[3]) << " 0x"
+                      << static_cast<uint32_t>(packet.datastore.raw[4]) << " 0x"
+                      << static_cast<uint32_t>(packet.datastore.raw[5]) << " 0x"
+                      << static_cast<uint32_t>(packet.datastore.raw[6]) << " 0x"
+                      << static_cast<uint32_t>(packet.datastore.raw[7]) << " 0x"
+                      << std::dec
                       << " in " << elapsed_seconds.count() << " s"
                       << std::endl;
             break;
@@ -346,7 +418,7 @@ int main(int argc, char** args)
             parser.isSet(GyroscopeAutoRecalibrateOption) ||
             parser.isSet(AxisTransitionOption) ||
             parser.isSet(LEDOption) ||
-            parser.isSet(EnableAccelerationOption))
+            parser.isSet(DisableMeasurementOption))
     {
         std::cout << "Non-blocking configuration, please wait..." << std::endl;
         sensor.UnlockConfiguration();
@@ -374,9 +446,83 @@ int main(int argc, char** args)
             sensor.SetAxisTransition(parser.value(AxisTransitionOption).toInt() == 6);
         if(parser.isSet(LEDOption))
             sensor.SetLED(!(parser.value(LEDOption).toUpper() == "OFF"));
-        // TODO: Implement measurement content settings
+        if(parser.isSet(DisableMeasurementOption))
+        {
+            QString arguments = parser.value(DisableMeasurementOption).toUpper();
+            bool enable_accel = true;
+            bool enable_velocity = true;
+            bool enable_angles = true;
+            bool enable_magnetometer = true;
+            bool enable_rtc = true;
+            bool enable_orientation = true;
+            bool enable_port_status = true;
+            bool enable_all = false;
+            bool disable_all = false;
+            if(arguments.trimmed().isEmpty())
+            {
+                std::cout << "WARNING: DISABLE setting is left empty, falling back to default: OFF" << std::endl;
+                arguments = "OFF";
+                enable_all = true;
+            }
+            if(arguments.trimmed().contains("OFF"))
+                enable_all = true;
+            else if(arguments.trimmed().contains("DEFAULT"))
+                disable_all = true;
+            else
+            {
+                QStringList arglist = arguments.trimmed().split(",", QString::SkipEmptyParts);
+                if(arglist.size() > 0)
+                {
+                    for(auto i = arglist.begin(); i != arglist.end(); i++)
+                    {
+                        QString ref = (*i);
+                        std::cout << "Attempting to disable:\t" << ref.toStdString() << std::endl;
+                        if(ref.contains("ACCEL"))
+                            enable_accel = false;
+                        else if(ref.contains("VELOCIT"))
+                            enable_velocity = false;
+                        else if(ref.contains("EULER") || ref.contains("ANGLE"))
+                            enable_angles = false;
+                        else if(ref.contains("MAGNET"))
+                            enable_magnetometer = false;
+                        else if(ref.contains("RTC") || ref.contains("CLOCK") || ref.contains("TIME"))
+                            enable_rtc = false;
+                        else if(ref.contains("ORIENTATION") || ref.contains("QUATERNION"))
+                            enable_orientation = false;
+                        else if(ref.contains("PORT") || ref.contains("STATUS"))
+                            enable_port_status = false;
+                        else
+                            std::cout << "WARNING: cannot interpret measurement name " << ref.toStdString() << ", dropping symbol" << std::endl;
+                    }
+                }
+            }
+            if(enable_all)
+                sensor.SetMeasurements(true,
+                                       true,
+                                       true,
+                                       true,
+                                       true,
+                                       true,
+                                       true);
+            else if(disable_all)
+                sensor.SetMeasurements(false,
+                                       false,
+                                       false,
+                                       false,
+                                       false,
+                                       false,
+                                       false);
+            else
+                sensor.SetMeasurements(enable_rtc,
+                                       enable_accel,
+                                       enable_velocity,
+                                       enable_angles,
+                                       enable_magnetometer,
+                                       enable_orientation,
+                                       enable_port_status);
+        }
         sensor.ConfirmConfiguration();
-        std::cout << "Reconfiguration, completed, proceeding to normal operation" << std::endl << std::endl;
+        std::cout << "Reconfiguration completed, proceeding to normal operation" << std::endl << std::endl;
     }
 
     maintenance = false;
@@ -463,6 +609,25 @@ int main(int argc, char** args)
                         << mags_x[i] << " | "
                         << mags_y[i] << " | "
                         << mags_z[i] << " ]"
+                        << std::endl;
+            }
+            logfile << std::endl;
+            logfile << std::endl << "Temperature measurements:" << std::endl;
+            for(size_t i = 0; i < mags_x.size(); i++)
+                logfile << i + 1 << "\t" << temps[i] << std::endl;
+        }
+        logfile << std::endl;
+        if(!quat_x.empty())
+        {
+            logfile << std::endl << "Orientation measurements:" << std::endl;
+            for(size_t i = 0; i < quat_x.size(); i++)
+            {
+                logfile << i + 1 << "\t"
+                        << "Orientation quaternion [X|Y|Z|W]:\t[ "
+                        << quat_x[i] << " | "
+                        << quat_y[i] << " | "
+                        << quat_z[i] << " | "
+                        << quat_w[i] << " ]"
                         << std::endl;
             }
             logfile << std::endl;
