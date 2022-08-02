@@ -630,10 +630,6 @@ int main(int argc, char** args)
                         << quat_w[i] << " ]"
                         << std::endl;
             }
-            logfile << std::endl;
-            logfile << std::endl << "Temperature measurements:" << std::endl;
-            for(size_t i = 0; i < mags_x.size(); i++)
-                logfile << i + 1 << "\t" << temps[i] << std::endl;
         }
         logfile << std::endl
                 << "Acquired "
