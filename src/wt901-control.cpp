@@ -116,7 +116,7 @@ int main(int argc, char** args)
                                  "on");
     parser.addOption(LEDOption);
     QCommandLineOption DisableMeasurementOption("disable",
-                                                "Disables measurements, comma-separated list. [off], default or: acceleration, velocity, angles, orientation, rtc",
+                                                "Disables measurements, comma-separated list. [off], default or: acceleration, velocity, angles, orientation, rtc, status",
                                                 "velocity,rtc,...",
                                                 "off");
     parser.addOption(DisableMeasurementOption);
@@ -296,7 +296,7 @@ int main(int argc, char** args)
                       << static_cast<uint32_t>(packet.datastore.raw[4]) << " 0x"
                       << static_cast<uint32_t>(packet.datastore.raw[5]) << " 0x"
                       << static_cast<uint32_t>(packet.datastore.raw[6]) << " 0x"
-                      << static_cast<uint32_t>(packet.datastore.raw[7]) << " 0x"
+                      << static_cast<uint32_t>(packet.datastore.raw[7])
                       << std::dec
                       << " in " << elapsed_seconds.count() << " s"
                       << std::endl;
