@@ -200,6 +200,51 @@ void QWitmotionWT901Sensor::SetMeasurements(const bool realtime_clock,
     sleep(1);
 }
 
+void QWitmotionWT901Sensor::CalculateAccelerationBias(witmotion_config_packet &packet,
+                                                      const float bias)
+{
+    /*
+        - .setting.raw[0] is fine tuning part of bias from 0.0 to -0.25, 256 grades uint8_t
+        - .setting.raw[1] is rough tuning part of bias, signed integer, 127 grades, int8_t
+        - Calibration coefficient is 4, so the rough bias is <abs(val) - 0.25> * 4 reduced
+          down to 127
+    */
+    float rough_bias = std::trunc(bias / 0.25);
+    float fine_bias = (bias < 0) ? 0.25 - std::abs(std::fmod(bias, 0.25)) : std::abs(std::fmod(bias, 0.25));
+    if(std::abs(rough_bias) > 127.f)
+        rough_bias = (rough_bias < 0) ? -127.f : 127.f;
+    fine_bias *= (255.0 / 0.25);
+    int8_t int_rough_bias = static_cast<int8_t>(rough_bias);
+    int8_t int_fine_bias = static_cast<int8_t>(fine_bias);
+    ttyout << "Acceleration bias renderer delivered rough part "
+           << int_rough_bias << " (" << rough_bias << "), fine part "
+           << int_fine_bias << " (" << fine_bias << ")" << ENDL;
+    packet.setting.raw[0] = int_fine_bias;
+    packet.setting.raw[1] = int_rough_bias;
+}
+
+void QWitmotionWT901Sensor::SetAccelerationBias(float x, float y, float z)
+{
+    witmotion_config_packet config_packet;
+    config_packet.header_byte = WITMOTION_CONFIG_HEADER;
+    config_packet.key_byte = WITMOTION_CONFIG_KEY;
+    ttyout << "Setting up X acceleration bias" << ENDL;
+    config_packet.address_byte = ridAccelerationBiasX;
+    CalculateAccelerationBias(config_packet, x);
+    emit SendConfig(config_packet);
+    sleep(1);
+    ttyout << "Setting up Y acceleration bias" << ENDL;
+    config_packet.address_byte = ridAccelerationBiasY;
+    CalculateAccelerationBias(config_packet, y);
+    emit SendConfig(config_packet);
+    sleep(1);
+    ttyout << "Setting up Z acceleration bias" << ENDL;
+    config_packet.address_byte = ridAccelerationBiasZ;
+    CalculateAccelerationBias(config_packet, z);
+    emit SendConfig(config_packet);
+    sleep(1);
+}
+
 QWitmotionWT901Sensor::QWitmotionWT901Sensor(const QString device,
                                              const QSerialPort::BaudRate rate,
                                              const uint32_t polling_period):

@@ -6,6 +6,7 @@
 
 #include <iostream>
 #include <string>
+#include <cmath>
 
 #include <unistd.h>
 
@@ -23,6 +24,8 @@ class QWitmotionWT901Sensor: public QAbstractWitmotionSensorController
     Q_OBJECT
 private:
     static const std::set<witmotion_packet_id> registered_types;
+protected:
+    virtual void CalculateAccelerationBias(witmotion_config_packet& packet, const float bias);
 public:
     virtual const std::set<witmotion_packet_id>* RegisteredPacketTypes();
     virtual void Start();
@@ -43,6 +46,9 @@ public:
                                  const bool magnetometer = true,
                                  const bool orientation = false,
                                  const bool port_status = false);
+    virtual void SetAccelerationBias(float x,
+                                     float y,
+                                     float z);
     virtual void ConfirmConfiguration();
     QWitmotionWT901Sensor(const QString device,
                           const QSerialPort::BaudRate rate,

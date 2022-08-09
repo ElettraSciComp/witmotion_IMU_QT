@@ -120,6 +120,11 @@ int main(int argc, char** args)
                                                 "velocity,rtc,...",
                                                 "off");
     parser.addOption(DisableMeasurementOption);
+    QCommandLineOption AccelerationBiasOption(QStringList() << "a" << "acceleration-bias",
+                                                "Set acceleration biases by axis [0:0:0]",
+                                                "X:Y:Z",
+                                                "0:0:0");
+    parser.addOption(AccelerationBiasOption);
 
     parser.process(app);
 
@@ -143,6 +148,8 @@ int main(int argc, char** args)
         QCoreApplication::exit(1);
     });
 
+    std::vector<witmotion::witmotion_datapacket> acquired;
+
     std::vector<float> accels_x,
             accels_y,
             accels_z,
@@ -161,8 +168,13 @@ int main(int argc, char** args)
             quat_y,
             quat_z,
             quat_w;
+
+    std::cout.precision(5);
+    std::cout << std::fixed;
+
     QObject::connect(&sensor, &QWitmotionWT901Sensor::Acquired,
                      [maintenance,
+                     &acquired,
                      &accels_x,
                      &accels_y,
                      &accels_z,
@@ -184,9 +196,6 @@ int main(int argc, char** args)
     {
         if(maintenance)
             return;
-
-        std::cout.precision(5);
-        std::cout << std::fixed;
 
         float ax, ay, az, wx, wy, wz, roll, pitch, yaw, t, mx, my, mz, qx, qy, qz, qw;
         uint8_t year, month, day, hour, minute, second;
@@ -307,6 +316,7 @@ int main(int argc, char** args)
         times.push_back(elapsed_seconds.count());
 
         packets++;
+        acquired.push_back(packet);
         time_start = time_acquisition;
     });
 
@@ -418,7 +428,8 @@ int main(int argc, char** args)
             parser.isSet(GyroscopeAutoRecalibrateOption) ||
             parser.isSet(AxisTransitionOption) ||
             parser.isSet(LEDOption) ||
-            parser.isSet(DisableMeasurementOption))
+            parser.isSet(DisableMeasurementOption) ||
+            parser.isSet(AccelerationBiasOption))
     {
         std::cout << "Non-blocking configuration, please wait..." << std::endl;
         sensor.UnlockConfiguration();
@@ -460,8 +471,8 @@ int main(int argc, char** args)
             bool disable_all = false;
             if(arguments.trimmed().isEmpty())
             {
-                std::cout << "WARNING: DISABLE setting is left empty, falling back to default: OFF" << std::endl;
-                arguments = "OFF";
+                std::cout << "WARNING: DISABLE setting is left empty, falling back to default" << std::endl;
+                arguments = "DEFAULT";
                 enable_all = true;
             }
             if(arguments.trimmed().contains("OFF"))
@@ -521,6 +532,25 @@ int main(int argc, char** args)
                                        enable_orientation,
                                        enable_port_status);
         }
+        if(parser.isSet(AccelerationBiasOption))
+        {
+            QStringList biases = parser.value(AccelerationBiasOption).split(":", QString::SkipEmptyParts, Qt::CaseInsensitive);
+            if(!biases.empty())
+            {
+                float bias_x = 0;
+                float bias_y = 0;
+                float bias_z = 0;
+                bias_x = biases[0].toFloat();
+                if(biases.size() > 1)
+                    bias_y = biases[1].toFloat();
+                if(biases.size() > 2)
+                    bias_z = biases[2].toFloat();
+                sensor.SetAccelerationBias(bias_x, bias_y, bias_z);
+                sleep(3);
+            }
+            else
+                std::cout << "ERROR: Cannot parse value list for acceleration biases. Please use <X:Y:Z> formulation" << std::endl;
+        }
         sensor.ConfirmConfiguration();
         std::cout << "Reconfiguration completed, proceeding to normal operation" << std::endl << std::endl;
     }
@@ -569,79 +599,113 @@ int main(int argc, char** args)
         logfile.open("sensor.log", std::ios::out|std::ios::trunc);
         logfile.precision(5);
         logfile << std::fixed;
-        logfile << "WITMOTION WT901 STANDALONE SENSOR CONTROLLER/MONITOR" << std::endl << std::endl;
+        logfile << " -== WITMOTION WT901 STANDALONE SENSOR CONTROLLER/MONITOR ==-" << std::endl << std::endl;
         auto time_start = std::chrono::system_clock::now();
         std::time_t timestamp_start = std::chrono::system_clock::to_time_t(time_start);
         logfile << "Device /dev/" << device.toStdString() << " opened at " << static_cast<int32_t>(rate) << " baud" << std::endl;
-        if(!accels_x.empty())
+        logfile << std::endl << "Acquired packets: " << std::endl;
+        if(!acquired.empty())
         {
-            logfile << std::endl << "Spatial measurements (only full packets logged):" << std::endl;
-            for(size_t i = 0; i < std::min(accels_x.size(),
-                                           std::min(vels_x.size(), rolls.size()) ); i++)
+            uint32_t packets = 1;
+            for(auto i = acquired.begin(); i != acquired.end(); i++)
             {
-                logfile << i + 1 << "\t"
-                        << "Accelerations [X|Y|Z]:\t[ "
-                        << accels_x[i] << " | "
-                        << accels_y[i] << " | "
-                        << accels_z[i] << " ]"
-                        << std::endl;
-                logfile << "Angular velocities [X|Y|Z]:\t[ "
-                        << vels_x[i] << " | "
-                        << vels_y[i] << " | "
-                        << vels_z[i] << " ]"
-                        << std::endl;
-                logfile << "\t"
-                        << "Euler angles [R|P|Y]:\t[ "
-                        << rolls[i] << " | "
-                        << pitches[i] << " | "
-                        << yaws[i] << " ]"
-                        << std::endl;
-            }
-        }
-        logfile << std::endl;
-        if(!mags_x.empty())
-        {
-            logfile << std::endl << "Magnetic measurements:" << std::endl;
-            for(size_t i = 0; i < mags_x.size(); i++)
-            {
-                logfile << i + 1 << "\t"
-                        << "Accelerations [X|Y|Z]:\t[ "
-                        << mags_x[i] << " | "
-                        << mags_y[i] << " | "
-                        << mags_z[i] << " ]"
-                        << std::endl;
+                witmotion::witmotion_datapacket packet = (*i);
+                float ax, ay, az, wx, wy, wz, roll, pitch, yaw, t, mx, my, mz, qx, qy, qz, qw;
+                uint8_t year, month, day, hour, minute, second;
+                uint16_t millisecond;
+                QString uptime;
+                switch (static_cast<witmotion::witmotion_packet_id>(packet.id_byte))
+                {
+                case witmotion::pidAcceleration:
+                    witmotion::decode_accelerations(packet, ax, ay, az, t);
+                    logfile << packets << "\t"
+                            << "Accelerations [X|Y|Z]:\t[ "
+                            << ax << " | "
+                            << ay << " | "
+                            << az << " ], temp "
+                            << t << " degrees"
+                            << std::endl;
+                    break;
+                case witmotion::pidAngularVelocity:
+                    witmotion::decode_angular_velocities(packet, wx, wy, wz, t);
+                    logfile << packets << "\t"
+                            << "Angular velocities [X|Y|Z]:\t[ "
+                            << wx << " | "
+                            << wy << " | "
+                            << wz << " ], temp "
+                            << t << " degrees"
+                            << std::endl;
+                    break;
+                case witmotion::pidAngles:
+                    witmotion::decode_angles(packet, roll, pitch, yaw, t);
+                    logfile << packets << "\t"
+                            << "Euler angles [R|P|Y]:\t[ "
+                            << roll << " | "
+                            << pitch << " | "
+                            << yaw << " ], temp "
+                            << t << " degrees"
+                            << std::endl;
+                    break;
+                case witmotion::pidMagnetometer:
+                    witmotion::decode_magnetometer(packet, mx, my ,mz, t);
+                    logfile << packets << "\t"
+                            << "Magnetic field [X|Y|Z]:\t[ "
+                            << mx << " | "
+                            << my << " | "
+                            << mz << " ], temp "
+                            << t << " degrees"
+                            << std::endl;
+                    break;
+                case witmotion::pidRTC:
+                    witmotion::decode_realtime_clock(packet, year, month, day, hour, minute, second, millisecond);
+                    uptime = QString().setNum(year) + "-"
+                            + QString().setNum(month) + "-"
+                            + QString().setNum(day) + " "
+                            + QString().setNum(hour) + ":"
+                            + QString().setNum(minute) + ":"
+                            + QString().setNum(second) + "."
+                            + QString().setNum(millisecond);
+                    logfile << packets << "\t"
+                            << "Uptime / Timestamp: "
+                            << uptime.toStdString()
+                            << std::endl;
+                    break;
+                case witmotion::pidOrientation:
+                    witmotion::decode_orientation(packet, qx, qy, qz, qw);
+                    logfile << packets << "\t"
+                            << "Orientation quaternion [X|Y|Z|W]:\t[ "
+                            << qx << " | "
+                            << qy << " | "
+                            << qz << " | "
+                            << qw << " ]"
+                            << std::endl;
+                    break;
+                case witmotion::pidDataPortStatus:
+                    logfile << packets << "\t"
+                            << "Data port status string: 0x"
+                            << std::hex
+                            << static_cast<uint32_t>(packet.datastore.raw[0]) << " 0x"
+                            << static_cast<uint32_t>(packet.datastore.raw[1]) << " 0x"
+                            << static_cast<uint32_t>(packet.datastore.raw[2]) << " 0x"
+                            << static_cast<uint32_t>(packet.datastore.raw[3]) << " 0x"
+                            << static_cast<uint32_t>(packet.datastore.raw[4]) << " 0x"
+                            << static_cast<uint32_t>(packet.datastore.raw[5]) << " 0x"
+                            << static_cast<uint32_t>(packet.datastore.raw[6]) << " 0x"
+                            << static_cast<uint32_t>(packet.datastore.raw[7])
+                            << std::dec
+                            << std::endl;
+                    break;
+                default:
+                    break;
+                }
+                packets++;
             }
             logfile << std::endl;
-            logfile << std::endl << "Temperature measurements:" << std::endl;
-            for(size_t i = 0; i < mags_x.size(); i++)
-                logfile << i + 1 << "\t" << temps[i] << std::endl;
         }
-        logfile << std::endl;
-        if(!quat_x.empty())
-        {
-            logfile << std::endl << "Orientation measurements:" << std::endl;
-            for(size_t i = 0; i < quat_x.size(); i++)
-            {
-                logfile << i + 1 << "\t"
-                        << "Orientation quaternion [X|Y|Z|W]:\t[ "
-                        << quat_x[i] << " | "
-                        << quat_y[i] << " | "
-                        << quat_z[i] << " | "
-                        << quat_w[i] << " ]"
-                        << std::endl;
-            }
-        }
-        logfile << std::endl
-                << "Acquired "
-                << std::min(accels_x.size(),
-                            std::min(vels_x.size(), rolls.size()) )
-                << " measurements, average reading time "
-                << std::accumulate(times.begin(), times.end(), 0.f) / times.size()
-                << " s"
-                << std::endl;
+
         if(parser.isSet(CovarianceOption))
         {
-            logfile << "Calculating noise covariance matrices..." << std::endl
+            logfile << "-= NOISE COVARIANCE MATRICES =-" << std::endl
                     << std::endl
                     << "Accelerations (total for " << accels_x.size() << " measurements): " << std::endl
                     << "[\t" << variance(accels_x) << "\t0.00000\t0.00000" << std::endl
@@ -665,8 +729,9 @@ int main(int argc, char** args)
                     << "[\t" << variance(mags_x) << "\t00.00000\t00.00000" << std::endl
                     << "\t00.00000\t" << variance(mags_y) << "\t00.00000" << std::endl
                     << "\t00.00000\t00.00000\t" << variance(mags_z) << "\t]" << std::endl
-                    << std::endl;
+                      << std::endl;
         }
+
         logfile << "Acquisition performed at " << std::ctime(&timestamp_start) << std::endl;
         logfile.close();
     }
