@@ -116,14 +116,14 @@ int main(int argc, char** args)
                                  "on");
     parser.addOption(LEDOption);
     QCommandLineOption DisableMeasurementOption("disable",
-                                                "Disables measurements, comma-separated list. [off], default or: acceleration, velocity, angles, orientation, rtc, status",
+                                                "Disables measurements, comma-separated list. [off], default or: acceleration, velocity, angles, magnetometer, orientation, rtc, status",
                                                 "velocity,rtc,...",
                                                 "off");
     parser.addOption(DisableMeasurementOption);
-    QCommandLineOption AccelerationBiasOption(QStringList() << "a" << "acceleration-bias",
-                                                "Set acceleration biases by axis [0:0:0]",
-                                                "X:Y:Z",
-                                                "0:0:0");
+    QCommandLineOption AccelerationBiasOption("set-acceleration-bias",
+                                              "Set acceleration biases by axis [0:0:0]",
+                                              "X:Y:Z",
+                                              "0:0:0");
     parser.addOption(AccelerationBiasOption);
 
     parser.process(app);
@@ -481,7 +481,11 @@ int main(int argc, char** args)
                 disable_all = true;
             else
             {
+                #if QT_VERSION < QT_VERSION_CHECK(5, 14, 0)
                 QStringList arglist = arguments.trimmed().split(",", QString::SkipEmptyParts);
+                #else
+                QStringList arglist = arguments.trimmed().split(",", Qt::SkipEmptyParts);
+                #endif
                 if(arglist.size() > 0)
                 {
                     for(auto i = arglist.begin(); i != arglist.end(); i++)
@@ -534,7 +538,11 @@ int main(int argc, char** args)
         }
         if(parser.isSet(AccelerationBiasOption))
         {
-            QStringList biases = parser.value(AccelerationBiasOption).split(":", QString::SkipEmptyParts, Qt::CaseInsensitive);
+            #if QT_VERSION < QT_VERSION_CHECK(5, 14, 0)
+                QStringList biases = parser.value(AccelerationBiasOption).split(":", QString::SkipEmptyParts, Qt::CaseInsensitive);
+            #else
+                QStringList biases = parser.value(AccelerationBiasOption).split(":", Qt::SkipEmptyParts, Qt::CaseInsensitive);
+            #endif
             if(!biases.empty())
             {
                 float bias_x = 0;
