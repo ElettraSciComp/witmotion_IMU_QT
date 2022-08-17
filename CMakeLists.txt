@@ -9,9 +9,9 @@ execute_process(COMMAND git rev-parse --short HEAD
 )
 file(STRINGS "version" PROJECT_VERSION)
 if(CMAKE_BUILD_TYPE STREQUAL "Release")
-set(PROJECT_VERSION "${PROJECT_VERSION}")
+    set(PROJECT_VERSION "${PROJECT_VERSION}")
 else(CMAKE_BUILD_TYPE STREQUAL "Release")
-set(PROJECT_VERSION "${PROJECT_VERSION}~dev_${COMMIT_ID}")
+    set(PROJECT_VERSION "${PROJECT_VERSION}~dev_${COMMIT_ID}")
 endif(CMAKE_BUILD_TYPE STREQUAL "Release")
 message(STATUS "Building version ${PROJECT_VERSION}")
 configure_file(config/version.h.in
@@ -109,3 +109,5 @@ if(BUILD_DOCS)
         add_custom_target(docs ALL DEPENDS doc-${PROJECT_NAME})
     endif(${PROJECT_NAME}_DOCS_EXISTS)
 endif(BUILD_DOCS)
+
+# INSTALLATION
