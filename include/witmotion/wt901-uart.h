@@ -49,6 +49,7 @@ public:
     virtual void SetAccelerationBias(float x,
                                      float y,
                                      float z);
+    virtual void SetI2CAddress(const uint8_t address);
     virtual void ConfirmConfiguration();
     QWitmotionWT901Sensor(const QString device,
                           const QSerialPort::BaudRate rate,

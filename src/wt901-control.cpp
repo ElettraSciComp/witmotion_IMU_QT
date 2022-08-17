@@ -125,6 +125,11 @@ int main(int argc, char** args)
                                               "X:Y:Z",
                                               "0:0:0");
     parser.addOption(AccelerationBiasOption);
+    QCommandLineOption I2CAddressOption("set-i2c-address",
+                                        "Set I2C bus address of the module (HEXADECIMAL) [50]",
+                                        "HEX",
+                                        "50");
+    parser.addOption(I2CAddressOption);
 
     parser.process(app);
 
@@ -420,6 +425,24 @@ int main(int argc, char** args)
             std::cout << "Reconfiguration completed. Please reconnect now" << std::endl;
             std::exit(0);
         }
+    }
+
+    if(parser.isSet(I2CAddressOption))
+    {
+        bool success;
+        uint8_t address = parser.value(I2CAddressOption).toUShort(&success, 16);
+        if((address > 0x7F) || !success)
+        {
+            std::cout << "ERROR: I2C address is 7 bits long, should be less than 7F hexadecimal. Falling back to 50" << std::endl;
+            address = 0x50;
+        }
+        std::cout << "Configuring I2C bus address. NOTE: Please reconnect the sensor after this operation with the proper setting!" << std::endl;
+        sensor.UnlockConfiguration();
+        sensor.SetI2CAddress(address);
+        sensor.ConfirmConfiguration();
+        sleep(1);
+        std::cout << "Reconfiguration completed. Please reconnect now" << std::endl;
+        std::exit(0);
     }
 
     if(parser.isSet(BaseVerticalOrientationOption) ||

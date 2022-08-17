@@ -245,6 +245,26 @@ void QWitmotionWT901Sensor::SetAccelerationBias(float x, float y, float z)
     sleep(1);
 }
 
+void QWitmotionWT901Sensor::SetI2CAddress(const uint8_t address)
+{
+    if(address > 0x7F)
+    {
+        emit ErrorOccurred("I2C address is hexadecimal int, 7 bits long. Dropping request");
+    }
+    else
+    {
+        witmotion_config_packet config_packet;
+        config_packet.header_byte = WITMOTION_CONFIG_HEADER;
+        config_packet.key_byte = WITMOTION_CONFIG_KEY;
+        ttyout << "Setting up I2C bus connection address" << ENDL;
+        config_packet.address_byte = ridIICAddress;
+        config_packet.setting.raw[0] = address;
+        config_packet.setting.raw[1] = 0x00;
+        emit SendConfig(config_packet);
+        sleep(1);
+    }
+}
+
 QWitmotionWT901Sensor::QWitmotionWT901Sensor(const QString device,
                                              const QSerialPort::BaudRate rate,
                                              const uint32_t polling_period):
