@@ -89,5 +89,18 @@ void decode_gps_accuracy(const witmotion_datapacket& packet,
                          float& local_accuracy,
                          float& horizontal_accuracy,
                          float& vertical_accuracy);
+
+/* MISCELLANEOUS UTILITIES */
+template<typename T> T variance(const std::vector<T>& array)
+{
+    T sum = std::accumulate(array.begin(), array.end(), 0.f);
+    T mean = sum / static_cast<T>(array.size());
+    T sq_dif = 0.f;
+    for(auto i = array.begin(); i != array.end(); i++)
+        sq_dif += std::pow((*i) - mean, 2);
+    sq_dif /= (array.size() > 1) ? static_cast<T>(array.size() - 1) : 1.f;
+    return std::sqrt(sq_dif);
+}
+
 }
 #endif

@@ -67,12 +67,12 @@ add_library(witmotion-wt31n SHARED
     ${MOC_WT31N}
     src/wt31n-uart.cpp
     )
-target_link_libraries(witmotion-wt31n witmotion-uart)
+target_link_libraries(witmotion-wt31n witmotion-uart Qt5::Core)
 add_executable(witmotionctl-wt31n
     ${MOC_WT31N}
     src/wt31n-control.cpp
     )
-target_link_libraries(witmotionctl-wt31n witmotion-wt31n)
+target_link_libraries(witmotionctl-wt31n witmotion-wt31n Qt5::Core)
 
 # WT901
 qt5_wrap_cpp(MOC_WT901
@@ -82,12 +82,27 @@ add_library(witmotion-wt901 SHARED
     ${MOC_WT901}
     src/wt901-uart.cpp
     )
-target_link_libraries(witmotion-wt901 witmotion-uart)
+target_link_libraries(witmotion-wt901 witmotion-uart Qt5::Core)
 add_executable(witmotionctl-wt901
     ${MOC_WT901}
     src/wt901-control.cpp
     )
-target_link_libraries(witmotionctl-wt901 witmotion-wt901)
+target_link_libraries(witmotionctl-wt901 witmotion-wt901 Qt5::Core)
+
+# JY901
+qt5_wrap_cpp(MOC_JY901
+    include/witmotion/jy901-uart.h
+    )
+add_library(witmotion-jy901 SHARED
+    ${MOC_JY01}
+    src/jy901-uart.cpp
+    )
+target_link_libraries(witmotion-jy901 witmotion-wt901 Qt5::Core)
+add_executable(witmotionctl-jy901
+    ${MOC_JY901}
+    src/jy901-control.cpp
+    )
+target_link_libraries(witmotionctl-jy901 witmotion-jy901 Qt5::Core)
 
 # EXAMPLES
 if(BUILD_EXAMPLES)

@@ -1,4 +1,4 @@
-#include "witmotion/wt901-uart.h"
+#include "witmotion/jy901-uart.h"
 
 #include <QCommandLineParser>
 #include <QCommandLineOption>
@@ -17,7 +17,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-using namespace witmotion::wt901;
+using namespace witmotion::jy901;
 
 void handle_shutdown(int s)
 {
@@ -40,6 +40,7 @@ int main(int argc, char** args)
     QCommandLineParser parser;
     parser.setApplicationDescription("WITMOTION WT901 STANDALONE SENSOR CONTROLLER/MONITOR");
     parser.addHelpOption();
+
     QCommandLineOption BaudRateOption(QStringList() << "b" << "baudrate",
                                       "Baudrate to set up the port",
                                       "2400 to 115200",
@@ -105,7 +106,7 @@ int main(int argc, char** args)
                                  "on");
     parser.addOption(LEDOption);
     QCommandLineOption DisableMeasurementOption("disable",
-                                                "Disables measurements, comma-separated list. [off], default or: acceleration, velocity, angles, magnetometer, orientation, rtc, status",
+                                                "Disables measurements, comma-separated list. [off], default or: acceleration, velocity, angles, magnetometer, orientation, rtc, altimeter, status",
                                                 "velocity,rtc,...",
                                                 "off");
     parser.addOption(DisableMeasurementOption);
@@ -132,11 +133,11 @@ int main(int argc, char** args)
         std::cout << "Wrong port polling interval specified, falling back to 50 ms!" << std::endl;
         interval = 50;
     }
-    QWitmotionWT901Sensor sensor(device, rate, interval);
+    QWitmotionJY901Sensor sensor(device, rate, interval);
     sensor.SetValidation(parser.isSet(ValidateOption));
 
     // Setting up data capturing slots: mutable/immutable C++14 lambda functions
-    QObject::connect(&sensor, &QWitmotionWT901Sensor::ErrorOccurred, [](const QString description)
+    QObject::connect(&sensor, &QWitmotionJY901Sensor::ErrorOccurred, [](const QString description)
     {
         std::cout << "ERROR: " << description.toStdString() << std::endl;
         QCoreApplication::exit(1);
@@ -163,10 +164,12 @@ int main(int argc, char** args)
             quat_z,
             quat_w;
 
+    std::vector<double> pressures, altitudes;
+
     std::cout.precision(5);
     std::cout << std::fixed;
 
-    QObject::connect(&sensor, &QWitmotionWT901Sensor::Acquired,
+    QObject::connect(&sensor, &QWitmotionJY901Sensor::Acquired,
                      [maintenance,
                      &acquired,
                      &accels_x,
@@ -186,7 +189,9 @@ int main(int argc, char** args)
                      &quat_x,
                      &quat_y,
                      &quat_z,
-                     &quat_w](const witmotion::witmotion_datapacket& packet)
+                     &quat_w,
+                     &pressures,
+                     &altitudes](const witmotion::witmotion_datapacket& packet)
     {
         if(maintenance)
             return;
@@ -195,6 +200,7 @@ int main(int argc, char** args)
         uint8_t year, month, day, hour, minute, second;
         uint16_t millisecond;
         QString uptime;
+        double pressure, altitude;
         static size_t packets = 1;
         static auto time_start = std::chrono::system_clock::now();
         auto time_acquisition = std::chrono::system_clock::now();
@@ -301,6 +307,17 @@ int main(int argc, char** args)
                       << static_cast<uint32_t>(packet.datastore.raw[6]) << " 0x"
                       << static_cast<uint32_t>(packet.datastore.raw[7])
                       << std::dec
+                      << " in " << elapsed_seconds.count() << " s"
+                      << std::endl;
+            break;
+        case witmotion::pidAltimeter:
+            witmotion::decode_altimeter(packet, pressure, altitude);
+            pressures.push_back(pressure);
+            altitudes.push_back(altitude);
+            std::cout << packets << "\t"
+                      << "Altimeter: pressure "
+                      << pressure << " Pa, altitude "
+                      << altitude << " m"
                       << " in " << elapsed_seconds.count() << " s"
                       << std::endl;
             break;
@@ -479,6 +496,7 @@ int main(int argc, char** args)
             bool enable_rtc = true;
             bool enable_orientation = true;
             bool enable_port_status = true;
+            bool enable_altimeter = true;
             bool enable_all = false;
             bool disable_all = false;
             if(arguments.trimmed().isEmpty())
@@ -506,25 +524,26 @@ int main(int argc, char** args)
                         std::cout << "Attempting to disable:\t" << ref.toStdString() << std::endl;
                         if(ref.contains("ACCEL"))
                             enable_accel = false;
-                        else if(ref.contains("VELOCIT"))
+                        if(ref.contains("VELOC"))
                             enable_velocity = false;
-                        else if(ref.contains("EULER") || ref.contains("ANGLE"))
+                        if(ref.contains("EULER") || ref.contains("ANGLE"))
                             enable_angles = false;
-                        else if(ref.contains("MAGNET"))
+                        if(ref.contains("MAGNET"))
                             enable_magnetometer = false;
-                        else if(ref.contains("RTC") || ref.contains("CLOCK") || ref.contains("TIME"))
+                        if(ref.contains("RTC") || ref.contains("CLOCK") || ref.contains("TIME"))
                             enable_rtc = false;
-                        else if(ref.contains("ORIENTATION") || ref.contains("QUATERNION"))
+                        if(ref.contains("ALTIM") || ref.contains("BARO"))
+                            enable_altimeter = false;
+                        if(ref.contains("ORIENTATION") || ref.contains("QUATERNION"))
                             enable_orientation = false;
-                        else if(ref.contains("PORT") || ref.contains("STATUS"))
+                        if(ref.contains("PORT") || ref.contains("STATUS"))
                             enable_port_status = false;
-                        else
-                            std::cout << "WARNING: cannot interpret measurement name " << ref.toStdString() << ", dropping symbol" << std::endl;
                     }
                 }
             }
             if(enable_all)
                 sensor.SetMeasurements(true,
+                                       true,
                                        true,
                                        true,
                                        true,
@@ -538,6 +557,7 @@ int main(int argc, char** args)
                                        false,
                                        false,
                                        false,
+                                       false,
                                        false);
             else
                 sensor.SetMeasurements(enable_rtc,
@@ -546,7 +566,8 @@ int main(int argc, char** args)
                                        enable_angles,
                                        enable_magnetometer,
                                        enable_orientation,
-                                       enable_port_status);
+                                       enable_port_status,
+                                       enable_altimeter);
         }
         if(parser.isSet(AccelerationBiasOption))
         {
@@ -609,6 +630,9 @@ int main(int argc, char** args)
                   << "[\t" << witmotion::variance(mags_x) << "\t00.00000\t00.00000" << std::endl
                   << "\t00.00000\t" << witmotion::variance(mags_y) << "\t00.00000" << std::endl
                   << "\t00.00000\t00.00000\t" << witmotion::variance(mags_z) << "\t]" << std::endl
+                  << std::endl
+                  << "Barometry (total for " << pressures.size() << " measurements): " << std::endl
+                  << "[\t" << witmotion::variance(pressures) << "\t]" << std::endl
                   << std::endl;
     }
 
@@ -634,6 +658,7 @@ int main(int argc, char** args)
                 uint8_t year, month, day, hour, minute, second;
                 uint16_t millisecond;
                 QString uptime;
+                double pressure, altitude;
                 switch (static_cast<witmotion::witmotion_packet_id>(packet.id_byte))
                 {
                 case witmotion::pidAcceleration:
@@ -715,6 +740,14 @@ int main(int argc, char** args)
                             << std::dec
                             << std::endl;
                     break;
+                case witmotion::pidAltimeter:
+                    witmotion::decode_altimeter(packet, pressure, altitude);
+                    logfile << packets << "\t"
+                              << "Altimeter: pressure "
+                              << pressure << " Pa, altitude "
+                              << altitude << " m"
+                              << std::endl;
+                    break;
                 default:
                     break;
                 }
@@ -749,7 +782,9 @@ int main(int argc, char** args)
                     << "[\t" << witmotion::variance(mags_x) << "\t00.00000\t00.00000" << std::endl
                     << "\t00.00000\t" << witmotion::variance(mags_y) << "\t00.00000" << std::endl
                     << "\t00.00000\t00.00000\t" << witmotion::variance(mags_z) << "\t]" << std::endl
-                      << std::endl;
+                    << "Barometry (total for " << pressures.size() << " measurements): " << std::endl
+                    << "[\t" << witmotion::variance(pressures) << "\t]" << std::endl
+                    << std::endl;
         }
 
         logfile << "Acquisition performed at " << std::ctime(&timestamp_start) << std::endl;
