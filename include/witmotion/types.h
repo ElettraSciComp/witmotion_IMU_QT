@@ -114,7 +114,7 @@ struct witmotion_datapacket
  * \brief List of configuration slots (registers) available for the library.
  *
  * List of configuration slots (registers) available for the library. The actual availability depends from the actual sensor and installation circuit.
- * Please refer to the official documentation for detailed explanation. **NOTE**: values which are currently untested/unsupported by the certain sensors or known malfunction producers are marked here as following:
+ * Please refer to the official documentation for detailed explanation.
 */
 enum witmotion_config_register_id
 {
@@ -163,15 +163,15 @@ enum witmotion_config_register_id
       This parameter also implicitly sets \ref ridOutputFrequency to the maximal feasible value for the available bandwidth.
     */
     ridPortBaudRate = 0x04,
-    ridAccelerationBiasX = 0x05, ///< Sets acceleration zero point bias for X axis
-    ridAccelerationBiasY = 0x06, ///< Sets acceleration zero point bias for Y axis
-    ridAccelerationBiasZ = 0x07, ///< Sets acceleration zero point bias for Z axis
-    ridAngularVelocityBiasX = 0x08, ///< Sets angular velocity zero point bias for X axis \note PROOFLESS
-    ridAngularVelocityBiasY = 0x09, ///< Sets angular velocity zero point bias for Y axis \note PROOFLESS
-    ridAngularVelocityBiasZ = 0x0A, ///< Sets angular velocity zero point bias for Z axis \note PROOFLESS
-    ridMagnetometerBiasX = 0x0B, ///< Sets magnetometer zero point bias for X axis \note PROOFLESS
-    ridMagnetometerBiasY = 0x0C, ///< Sets magnetometer zero point bias for Y axis \note PROOFLESS
-    ridMagnetometerBiasZ = 0x0D, ///< Sets magnetometer zero point bias for Z axis \note PROOFLESS
+    ridAccelerationBiasX = 0x05, ///< Sets acceleration zero point bias for X axis, refer to \ref acceleration-bias page for explanation.
+    ridAccelerationBiasY = 0x06, ///< Sets acceleration zero point bias for Y axis, refer to \ref acceleration-bias page for explanation.
+    ridAccelerationBiasZ = 0x07, ///< Sets acceleration zero point bias for Z axis, refer to \ref acceleration-bias page for explanation.
+    ridAngularVelocityBiasX = 0x08, ///< Sets angular velocity zero point bias for X axis. NOT YET PROVEN AS WORKING
+    ridAngularVelocityBiasY = 0x09, ///< Sets angular velocity zero point bias for Y axis. NOT YET PROVEN AS WORKING
+    ridAngularVelocityBiasZ = 0x0A, ///< Sets angular velocity zero point bias for Z axis. NOT YET PROVEN AS WORKING
+    ridMagnetometerBiasX = 0x0B, ///< Sets magnetometer zero point bias for X axis. **MAY BLOCK THE MEASUREMENTS**
+    ridMagnetometerBiasY = 0x0C, ///< Sets magnetometer zero point bias for Y axis. **MAY BLOCK THE MEASUREMENTS**
+    ridMagnetometerBiasZ = 0x0D, ///< Sets magnetometer zero point bias for Z axis. **MAY BLOCK THE MEASUREMENTS**
     ridPortModeD0 = 0x0E,
     ridPortModeD1 = 0x0F,
     ridPortModeD2 = 0x10,
@@ -246,7 +246,7 @@ struct witmotion_config_packet
     union
     {
         uint8_t raw[2];
-        uint16_t* bin;
+        uint16_t bin;
     }setting; ///< 2-byte internal data storage array represented as C-style memory union. The values should be formulated byte-by-byte referring to the actual sensor's documentation.
 };
 
