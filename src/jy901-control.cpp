@@ -120,6 +120,11 @@ int main(int argc, char** args)
                                         "HEX",
                                         "50");
     parser.addOption(I2CAddressOption);
+    QCommandLineOption RTCSetupOption("set-clock",
+                                      "Set realtime clock to ISO 8601 datetime [yyyy-MM-dd HH:mm:ss.mss] or NOW",
+                                      "DATE TIME",
+                                      "NOW");
+    parser.addOption(RTCSetupOption);
 
     parser.process(app);
 
@@ -458,7 +463,8 @@ int main(int argc, char** args)
             parser.isSet(AxisTransitionOption) ||
             parser.isSet(LEDOption) ||
             parser.isSet(DisableMeasurementOption) ||
-            parser.isSet(AccelerationBiasOption))
+            parser.isSet(AccelerationBiasOption) ||
+            parser.isSet(RTCSetupOption))
     {
         std::cout << "Non-blocking configuration, please wait..." << std::endl;
         sensor.UnlockConfiguration();
@@ -591,6 +597,17 @@ int main(int argc, char** args)
             }
             else
                 std::cout << "ERROR: Cannot parse value list for acceleration biases. Please use <X:Y:Z> formulation" << std::endl;
+        }
+        if(parser.isSet(RTCSetupOption))
+        {
+            if(parser.value(RTCSetupOption).toUpper() == "NOW")
+                sensor.SetRTC(QDateTime::currentDateTime());
+            else
+            {
+                QDateTime datetime = QDateTime::fromString(parser.value(RTCSetupOption), Qt::ISODateWithMs);
+                sensor.SetRTC(datetime);
+                sleep(1);
+            }
         }
         sensor.ConfirmConfiguration();
         std::cout << "Reconfiguration completed, proceeding to normal operation" << std::endl << std::endl;

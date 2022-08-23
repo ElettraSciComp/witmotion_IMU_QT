@@ -3,6 +3,7 @@
 
 #include <QSerialPort>
 #include <QSerialPortInfo>
+#include <QDateTime>
 
 #include <iostream>
 #include <string>
@@ -50,6 +51,7 @@ public:
                                      float y,
                                      float z);
     virtual void SetI2CAddress(const uint8_t address);
+    virtual void SetRTC(const QDateTime datetime);
     virtual void ConfirmConfiguration();
     QWitmotionWT901Sensor(const QString device,
                           const QSerialPort::BaudRate rate,

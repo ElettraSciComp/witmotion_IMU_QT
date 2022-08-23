@@ -55,6 +55,11 @@ enum witmotion_packet_id
     pidGPSAccuracy = 0x5A ///< GPS: visible satellites + variance vector [East-North-Up] (16-bit binary normalized quasi-floats)
 };
 
+/*!
+  \brief Packet ID set to retrieve descriptions via \ref witmotion_packet_descriptions.
+
+  Contains values referenced in \ref witmotion_packet_id enumeration to explicitly determine a set of currently supported packet IDs. The packet IDs not referenced here sould not be considered supported.
+*/
 static const std::set<size_t> witmotion_registered_ids = {
     0x50,
     0x51,
@@ -69,6 +74,11 @@ static const std::set<size_t> witmotion_registered_ids = {
     0x5A
 };
 
+/*!
+  \brief Packet ID string set to store built-in descriptions for \ref message_enumerator.
+
+  Contains values referenced in \ref witmotion_packet_id enumeration with corresponding description strings used by \ref message_enumerator application.
+*/
 static const std::map<uint8_t, std::string> witmotion_packet_descriptions = {
     {0x50, "Real Time Clock"},
     {0x51, "Accelerations"},
@@ -103,7 +113,8 @@ struct witmotion_datapacket
 /*!
  * \brief List of configuration slots (registers) available for the library.
  *
- * List of configuration slots (registers) available for the library. The actual availability depends from the actual sensor and installation circuit. Please refer to the official documentation for detailed explanation.
+ * List of configuration slots (registers) available for the library. The actual availability depends from the actual sensor and installation circuit.
+ * Please refer to the official documentation for detailed explanation. **NOTE**: values which are currently untested/unsupported by the certain sensors or known malfunction producers are marked here as following:
 */
 enum witmotion_config_register_id
 {
@@ -116,18 +127,51 @@ enum witmotion_config_register_id
       - `0x03` - Altitude reset (only for barometric altimeter)
     */
     ridCalibrate = 0x01,
+    /*!
+      Regulates sensor output. The value stored in \ref witmotion_config_packet.`raw` determines packet ID selection to output from low to high bits by offset. `0` means disabling of the selected data packet output.
+
+      |`raw[0]` offset|Packet type|`raw[1]` offset| Packet type|
+      |:-------------:|----------:|:-------------:|-----------:|
+      |0|\ref pidRTC|0|\ref pidGPSGroundSpeed|
+      |1|\ref pidAcceleration|1|\ref pidOrientation|
+      |2|\ref pidAngularVelocity|2|\ref pidGPSAccuracy|
+      |3|\ref pidAngles|3|Reserved|
+      |4|\ref pidMagnetometer|4|Reserved|
+      |5|\ref pidDataPortStatus|5|Reserved|
+      |6|\ref pidAltimeter|6|Reserved|
+      |7|\ref pidGPSCoordinates|7|Reserved|
+    */
     ridOutputValueSet = 0x02,
+    /*!
+      Regulates output frequency. **NOTE**: the maximum available frequency is determined internally by the available bandwidth obtained from \ref ridPortBaudRate.
+      The actual value stored in \ref witmotion_config_packet.`raw[0]` can be determined from the following table. \ref witmotion_config_packet.`raw[1]` is set to `0x00`. Also the table contains argument value for \ref witmotion_output_frequency helper function which is used by the controller applications.
+
+      |**Frequency, Hz**|0 (shutdown)|0 (single measurement)|0.1   |0.5   |1     |2     |5     |10    |20    |50    |100   |125   |200   |
+      |:----------------|:----------:|:--------------------:|:----:|:----:|:----:|:----:|:----:|:----:|:----:|:----:|:----:|:----:|:----:|
+      |**Value**        |`0x0D`      |`0x0C`                |`0x01`|`0x02`|`0x03`|`0x04`|`0x05`|`0x06`|`0x07`|`0x08`|`0x09`|`0x0A`|`0x0B`|
+      |**Argument**     | 0          | -1                   | -10  | -2   | 1    | 2    | 5    | 10   | 20   | 50   | 100  | 125  | 200  |
+    */
     ridOutputFrequency = 0x03,
+    /*!
+      Regulates port baud rate. **NOTE**: the sensor has no possibility of hardware flow control and it cannot report to the system what baud rate should be explicitly used!
+      The actual value stored in \ref witmotion_config_packet.`raw[0]` can be determined from the following table. \ref witmotion_config_packet.`raw[1]` is set to `0x00`.
+      The \ref witmotion_baud_rate helper function argument is accepted as `QSerialPort::BaudRate` enumeration member, so only the speed inticated in that enumeration are explicitly supported.
+      |**Rate, baud**|1200/1400|4800  |9600  |19200 |38400 |57600 |115200|
+      |:-------------|:-------:|:----:|:----:|:----:|:----:|:----:|:----:|
+      |**Value**     |`0x00`   |`0x01`|`0x02`|`0x03`|`0x04`|`0x05`|`0x06`|
+
+      This parameter also implicitly sets \ref ridOutputFrequency to the maximal feasible value for the available bandwidth.
+    */
     ridPortBaudRate = 0x04,
-    ridAccelerationBiasX = 0x05,
-    ridAccelerationBiasY = 0x06,
-    ridAccelerationBiasZ = 0x07,
-    ridAngularVelocityBiasX = 0x08,
-    ridAngularVelocityBiasY = 0x09,
-    ridAngularVelocityBiasZ = 0x0A,
-    ridMagnetometerBiasX = 0x0B,
-    ridMagnetometerBiasY = 0x0C,
-    ridMagnetometerBiasZ = 0x0D,
+    ridAccelerationBiasX = 0x05, ///< Sets acceleration zero point bias for X axis
+    ridAccelerationBiasY = 0x06, ///< Sets acceleration zero point bias for Y axis
+    ridAccelerationBiasZ = 0x07, ///< Sets acceleration zero point bias for Z axis
+    ridAngularVelocityBiasX = 0x08, ///< Sets angular velocity zero point bias for X axis \note PROOFLESS
+    ridAngularVelocityBiasY = 0x09, ///< Sets angular velocity zero point bias for Y axis \note PROOFLESS
+    ridAngularVelocityBiasZ = 0x0A, ///< Sets angular velocity zero point bias for Z axis \note PROOFLESS
+    ridMagnetometerBiasX = 0x0B, ///< Sets magnetometer zero point bias for X axis \note PROOFLESS
+    ridMagnetometerBiasY = 0x0C, ///< Sets magnetometer zero point bias for Y axis \note PROOFLESS
+    ridMagnetometerBiasZ = 0x0D, ///< Sets magnetometer zero point bias for Z axis \note PROOFLESS
     ridPortModeD0 = 0x0E,
     ridPortModeD1 = 0x0F,
     ridPortModeD2 = 0x10,

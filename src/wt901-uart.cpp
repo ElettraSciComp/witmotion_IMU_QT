@@ -248,9 +248,7 @@ void QWitmotionWT901Sensor::SetAccelerationBias(float x, float y, float z)
 void QWitmotionWT901Sensor::SetI2CAddress(const uint8_t address)
 {
     if(address > 0x7F)
-    {
         emit ErrorOccurred("I2C address is hexadecimal int, 7 bits long. Dropping request");
-    }
     else
     {
         witmotion_config_packet config_packet;
@@ -263,6 +261,40 @@ void QWitmotionWT901Sensor::SetI2CAddress(const uint8_t address)
         emit SendConfig(config_packet);
         sleep(1);
     }
+}
+
+void QWitmotionWT901Sensor::SetRTC(const QDateTime datetime)
+{
+    if(!datetime.isValid())
+        emit ErrorOccurred("Invalid date string specified. Dropping request");
+    else
+    {
+        witmotion_config_packet config_packet;
+        config_packet.header_byte = WITMOTION_CONFIG_HEADER;
+        config_packet.key_byte = WITMOTION_CONFIG_KEY;
+        ttyout << "Setting up RTC date/time origin" << ENDL;
+        config_packet.address_byte = ridTimeMilliseconds;
+        uint16_t msec = static_cast<uint16_t>(datetime.time().msec());
+        std::copy(&msec, &msec + 1, config_packet.setting.raw);
+        emit SendConfig(config_packet);
+        usleep(100000);
+        config_packet.address_byte = ridTimeMinuteSecond;
+        config_packet.setting.raw[0] = static_cast<uint8_t>(datetime.time().minute());
+        config_packet.setting.raw[1] = static_cast<uint8_t>(datetime.time().second());
+        emit SendConfig(config_packet);
+        sleep(1);
+        config_packet.address_byte = ridTimeDayHour;
+        config_packet.setting.raw[0] = static_cast<uint8_t>(datetime.date().day());
+        config_packet.setting.raw[1] = static_cast<uint8_t>(datetime.time().hour());
+        emit SendConfig(config_packet);
+        sleep(1);
+        config_packet.address_byte = ridTimeYearMonth;
+        config_packet.setting.raw[0] = static_cast<uint8_t>(datetime.date().year() - 2000);
+        config_packet.setting.raw[1] = static_cast<uint8_t>(datetime.date().month());
+        emit SendConfig(config_packet);
+        sleep(1);
+    }
+
 }
 
 QWitmotionWT901Sensor::QWitmotionWT901Sensor(const QString device,
