@@ -23,7 +23,7 @@
 
 Upper level namespace containing all the declared constants, parameters, classes, functions.
 
-__NOTE__: it is strictly NOT RECOMMENDED to use this namespace implicitly through `using namespace` directive.
+\note It is strictly NOT RECOMMENDED to use this namespace implicitly through `using namespace` directive.
 */
 namespace witmotion
 {
@@ -31,14 +31,12 @@ namespace witmotion
 static const uint8_t WITMOTION_HEADER_BYTE = 0x55; ///< Packet header byte value (vendor protocol-specific)
 static const uint8_t WITMOTION_CONFIG_HEADER = 0xFF; ///< Configuration header byte value (vendor protocol-specific)
 static const uint8_t WITMOTION_CONFIG_KEY = 0xAA; ///< Configuration marker key byte value (vendor protocol-specific)
-static const float DEG2RAD = M_PI / 180.f;
+static const float DEG2RAD = M_PI / 180.f; ///< \private
 
 /*!
   \brief Packet type IDs from the vendor-defined protocol
 
-  If one of the packet type IDs defined here is registered after \ref WITMOTION_HEADER_BYTE in the data flow
-received from the sensor, the packet header is considered found and the remaining bytes are considered as body of the packet.
-See \ref util.h for decoder function reference.
+  If one of the packet type IDs defined here is registered after \ref WITMOTION_HEADER_BYTE in the data flow received from the sensor, the packet header is considered found and the remaining bytes are considered as body of the packet. See \ref util.h for decoder function reference.
 */
 enum witmotion_packet_id
 {
@@ -107,7 +105,7 @@ struct witmotion_datapacket
         int16_t raw_cells[4];
         int32_t raw_large[2];
     }datastore; ///< 8-byte internal data storage array represented as C-style memory union. The stored data represented as `int8_t*`, `uint8_t*`, `int16_t*` or `int32_t*` array head pointer.
-    uint8_t crc; ///< Validation CRC for the packet. Calculated as an equivalent to the following operation: \f$ crc = \sum_{i=0}^{i < 10} *\mbox{reinterpret_cast<uint8_t*>(this)} + i \f$
+    uint8_t crc; ///< Validation CRC for the packet. Calculated as an equivalent to the following operation: \f$ crc = \sum_{i=0}^{i < 10}\times\f$`reinterpret_cast<uint8_t*>(this) + i`
 };
 
 /*!
@@ -120,7 +118,7 @@ enum witmotion_config_register_id
 {
     ridSaveSettings = 0x00, ///< Saves the settings uploaded in the current bringup session, or resets it to default (if supported). To make factory reset of the sensor, set `raw[0] = 0x01` in \ref witmotion_config_packet instance used.
     /*!
-      Sets the sensor to calibration mode. The value stored in \ref witmotion_config_packet.`raw[0]` determines device selection:
+      Sets the sensor to calibration mode. The value stored in \ref witmotion_config_packet.setting.`raw[0]` determines device selection:
       - `0x00` - End calibration
       - `0x01` - Accelerometer calibration
       - `0x02` - Magnetometer calibration
@@ -128,7 +126,7 @@ enum witmotion_config_register_id
     */
     ridCalibrate = 0x01,
     /*!
-      Regulates sensor output. The value stored in \ref witmotion_config_packet.`raw` determines packet ID selection to output from low to high bits by offset. `0` means disabling of the selected data packet output.
+      Regulates sensor output. The value stored in \ref witmotion_config_packet.setting.`raw` determines packet ID selection to output from low to high bits by offset. `0` means disabling of the selected data packet output.
 
       |`raw[0]` offset|Packet type|`raw[1]` offset| Packet type|
       |:-------------:|----------:|:-------------:|-----------:|
@@ -144,7 +142,7 @@ enum witmotion_config_register_id
     ridOutputValueSet = 0x02,
     /*!
       Regulates output frequency. **NOTE**: the maximum available frequency is determined internally by the available bandwidth obtained from \ref ridPortBaudRate.
-      The actual value stored in \ref witmotion_config_packet.`raw[0]` can be determined from the following table. \ref witmotion_config_packet.`raw[1]` is set to `0x00`. Also the table contains argument value for \ref witmotion_output_frequency helper function which is used by the controller applications.
+      The actual value stored in \ref witmotion_config_packet.setting.`raw[0]` can be determined from the following table. \ref witmotion_config_packet.setting.`raw[1]` is set to `0x00`. Also the table contains argument value for \ref witmotion_output_frequency helper function which is used by the controller applications.
 
       |**Frequency, Hz**|0 (shutdown)|0 (single measurement)|0.1   |0.5   |1     |2     |5     |10    |20    |50    |100   |125   |200   |
       |:----------------|:----------:|:--------------------:|:----:|:----:|:----:|:----:|:----:|:----:|:----:|:----:|:----:|:----:|:----:|
@@ -154,7 +152,7 @@ enum witmotion_config_register_id
     ridOutputFrequency = 0x03,
     /*!
       Regulates port baud rate. **NOTE**: the sensor has no possibility of hardware flow control and it cannot report to the system what baud rate should be explicitly used!
-      The actual value stored in \ref witmotion_config_packet.`raw[0]` can be determined from the following table. \ref witmotion_config_packet.`raw[1]` is set to `0x00`.
+      The actual value stored in \ref witmotion_config_packet.setting.`raw[0]` can be determined from the following table. \ref witmotion_config_packet.setting.`raw[1]` is set to `0x00`.
       The \ref witmotion_baud_rate helper function argument is accepted as `QSerialPort::BaudRate` enumeration member, so only the speed inticated in that enumeration are explicitly supported.
       |**Rate, baud**|1200/1400|4800  |9600  |19200 |38400 |57600 |115200|
       |:-------------|:-------:|:----:|:----:|:----:|:----:|:----:|:----:|
@@ -172,67 +170,104 @@ enum witmotion_config_register_id
     ridMagnetometerBiasX = 0x0B, ///< Sets magnetometer zero point bias for X axis. **MAY BLOCK THE MEASUREMENTS**
     ridMagnetometerBiasY = 0x0C, ///< Sets magnetometer zero point bias for Y axis. **MAY BLOCK THE MEASUREMENTS**
     ridMagnetometerBiasZ = 0x0D, ///< Sets magnetometer zero point bias for Z axis. **MAY BLOCK THE MEASUREMENTS**
+    /*!
+      Digital port D0 mode. The values are set only via \ref witmotion_config_packet.setting.`raw[0]` whilst \ref witmotion_config_packet.setting.`raw[1]` is set to 0. Please refer to the following table to determine the exact value needed.
+
+      |**Description**|Analog input (default)|Digital input|Digital output (high)|Digital output (low)|PWM output|
+      |:--------------|:--------------------:|:-----------:|:-------------------:|:------------------:|:--------:|
+      |**Value**      |`0x00`                |`0x01`       |`0x02`               |`0x03`              |`0x04`    |
+    */
     ridPortModeD0 = 0x0E,
+    /*!
+      Digital port D1 mode. The values are set only via \ref witmotion_config_packet.setting.`raw[0]` whilst \ref witmotion_config_packet.setting.`raw[1]` is set to 0. Please refer to the following table to determine the exact value needed.
+
+      |**Description**|Analog input (default)|Digital input|Digital output (high)|Digital output (low)|PWM output|
+      |:--------------|:--------------------:|:-----------:|:-------------------:|:------------------:|:--------:|
+      |**Value**      |`0x00`                |`0x01`       |`0x02`               |`0x03`              |`0x04`    |
+
+      \note If the external GPS receiver is used to obtain world time, and it is compatible with Witmotion serial protocol, the port D1 should be connected to its **TX** pin and turned into GPS receiver port by the special value `0x05` set for this register. The baud rate on which GPS receiver communicates with the sensor, is set via \ref ridGPSBaudRate register.
+    */
     ridPortModeD1 = 0x0F,
+    /*!
+      Digital port D2 mode. The values are set only via \ref witmotion_config_packet.setting.`raw[0]` whilst \ref witmotion_config_packet.setting.`raw[1]` is set to 0. Please refer to the following table to determine the exact value needed.
+
+      |**Description**|Analog input (default)|Digital input|Digital output (high)|Digital output (low)|PWM output|
+      |:--------------|:--------------------:|:-----------:|:-------------------:|:------------------:|:--------:|
+      |**Value**      |`0x00`                |`0x01`       |`0x02`               |`0x03`              |`0x04`    |
+    */
     ridPortModeD2 = 0x10,
+    /*!
+      Digital port D3 mode. The values are set only via \ref witmotion_config_packet.setting.`raw[0]` whilst \ref witmotion_config_packet.setting.`raw[1]` is set to 0. Please refer to the following table to determine the exact value needed.
+
+      |**Description**|Analog input (default)|Digital input|Digital output (high)|Digital output (low)|PWM output|
+      |:--------------|:--------------------:|:-----------:|:-------------------:|:------------------:|:--------:|
+      |**Value**      |`0x00`                |`0x01`       |`0x02`               |`0x03`              |`0x04`    |
+    */
     ridPortModeD3 = 0x11,
-    ridPortPWMLevelD0 = 0x12,
-    ridPortPWMLevelD1 = 0x13,
-    ridPortPWMLevelD2 = 0x14,
-    ridPortPWMLevelD3 = 0x15,
-    ridPortPWMPeriodD0 = 0x16,
-    ridPortPWMPeriodD1 = 0x17,
-    ridPortPWMPeriodD2 = 0x18,
-    ridPortPWMPeriodD3 = 0x19,
-    ridIICAddress = 0x1A,
-    ridLED = 0x1B,
+    ridPortPWMLevelD0 = 0x12, ///< Digital port D0 PWM high level pulse width, microseconds, 16-bit unsigned integer.
+    ridPortPWMLevelD1 = 0x13, ///< Digital port D1 PWM high level pulse width, microseconds, 16-bit unsigned integer.
+    ridPortPWMLevelD2 = 0x14, ///< Digital port D2 PWM high level pulse width, microseconds, 16-bit unsigned integer.
+    ridPortPWMLevelD3 = 0x15, ///< Digital port D3 PWM high level pulse width, microseconds, 16-bit unsigned integer.
+    ridPortPWMPeriodD0 = 0x16, ///< Digital port D0 PWM period length, microseconds, 16-bit unsigned integer.
+    ridPortPWMPeriodD1 = 0x17, ///< Digital port D1 PWM period length, microseconds, 16-bit unsigned integer.
+    ridPortPWMPeriodD2 = 0x18, ///< Digital port D2 PWM period length, microseconds, 16-bit unsigned integer.
+    ridPortPWMPeriodD3 = 0x19, ///< Digital port D3 PWM period length, microseconds, 16-bit unsigned integer.
+    ridIICAddress = 0x1A, ///< Sets up I2C address of the sensor. Default value is `0x50`, 7-bit unsigned integer in  \ref witmotion_config_packet.setting.`raw[0]` whilst \ref witmotion_config_packet.setting.`raw[1]` is set to 0.
+    ridLED = 0x1B, ///< Toggles on/off LED indication (for enclosed sensors only).
+    /*!
+      Regulates GPS receiver baud rate on port D1 (see \ref ridPortModeD1). The following table contains value set for \ref witmotion_config_packet.setting.`raw[0]` representing the different baud rates. \ref witmotion_config_packet.setting.`raw[1]` should be set to 0.
+      |**Rate, baud**|1200/1400|4800  |9600  |19200 |38400 |57600 |115200|230400|460800|921600|
+      |:-------------|:-------:|:----:|:----:|:----:|:----:|:----:|:----:|:----:|:----:|:----:|
+      |**Value**     |`0x00`   |`0x01`|`0x02`|`0x03`|`0x04`|`0x05`|`0x06`|`0x07`|`0x08`|`0x09`|
+      \note Baud rates over 256000 baud should not be considered standard.
+    */
     ridGPSBaudRate = 0x1C,
 
-    ridStandbyMode = 0x22,
-    ridInstallationDirection = 0x23,
-    ridTransitionAlgorithm = 0x24,
+    ridStandbyMode = 0x22, ///< Toggles dormant mode. \ref witmotion_config_packet.setting.`raw[0]` should be set to `0x01`, \ref witmotion_config_packet.setting.`raw[1]` to 0.
+    ridInstallationDirection = 0x23, ///< Toggles on/off internal rotation transform for vertical installation.  \ref witmotion_config_packet.setting.`raw[1]` should be set to 0, \ref witmotion_config_packet.setting.`raw[0]` being to `0x01` allows vertical installation, to `0x00` - horizontal installation.
+    ridTransitionAlgorithm = 0x24, ///< Regulates whether 9-axis (`0x01` in \ref witmotion_config_packet.setting.`raw[0]`) or 6-axis (`0x00`) transition algorithm should be used. \ref witmotion_config_packet.setting.`raw[1]` should be set to 0.
 
-    ridTimeYearMonth = 0x30,
-    ridTimeDayHour = 0x31,
-    ridTimeMinuteSecond = 0x32,
-    ridTimeMilliseconds = 0x33,
-    ridSetAccelerationX = 0x34,
-    ridSetAccelerationY = 0x35,
-    ridSetAccelerationZ = 0x36,
-    ridSetAngularVelocityX = 0x37,
-    ridSetAngularVelocityY = 0x38,
-    ridSetAngularVelocityZ = 0x39,
-    ridSetMagnetometerX = 0x3A,
-    ridSetMagnetometerY = 0x3B,
-    ridSetMagnetometerZ = 0x3C,
-    ridSetAngleRoll = 0x3D,
-    ridSetAnglePitch = 0x3E,
-    ridSetAngleYaw = 0x3F,
-    ridSetTemperature = 0x40,
-    ridSetPortStatusD0 = 0x41,
-    ridSetPortStatusD1 = 0x42,
-    ridSetPortStatusD2 = 0x43,
-    ridSetPortStatusD3 = 0x44,
-    ridSetPressureLow = 0x45,
-    ridSetPressureHigh = 0x46,
-    ridSetAltitudeLow = 0x47,
-    ridSetAltitudeHigh = 0x48,
-    ridSetLongitudeLow = 0x49,
-    ridSetLongitudeHigh = 0x4A,
-    ridSetLatitudeLow = 0x4B,
-    ridSetLatitudeHigh = 0x4C,
-    ridSetGPSAltitude = 0x4D,
-    ridSetGPSYaw = 0x4E,
-    ridSetGPSGroundSpeedLow = 0x4F,
-    ridSetGPSGroundSpeedHigh = 0x50,
-    ridSetOrientationX = 0x51,
-    ridSetOrientationY = 0x52,
-    ridSetOrientationZ = 0x53,
-    ridSetOrientationW = 0x54,
+    ridTimeYearMonth = 0x30, ///< Sets RTC to the given year (\ref witmotion_config_packet.setting.`raw[0]`) and month (\ref witmotion_config_packet.setting.`raw[1]`). Year is a signed 8-bit integer with zero origin point set to 2000 year Gregorian calendar. Month is digitized to 1-12, unsigned 8-bit integer.
+    ridTimeDayHour = 0x31, ///< Sets RTC to the given day of the month (\ref witmotion_config_packet.setting.`raw[0]`) and hour (\ref witmotion_config_packet.setting.`raw[1]`) in 24H system.
+    ridTimeMinuteSecond = 0x32, ///< Sets RTC to the given minute (\ref witmotion_config_packet.setting.`raw[0]`) and second (\ref witmotion_config_packet.setting.`raw[1]`) in 24H system.
+    ridTimeMilliseconds = 0x33, ///< Sets RTC to the given milliseconds exposed as 16-bit unsigned integer.
+    ridSetAccelerationX = 0x34, ///< Sets up origin point or impostor value (needed when the measurement is forced for output by \ref ridOutputValueSet but not actually supported by the sensor) for acceleration on X axis. NOT YET PROVEN AS WORKING
+    ridSetAccelerationY = 0x35, ///< Sets up origin point or impostor value (needed when the measurement is forced for output by \ref ridOutputValueSet but not actually supported by the sensor) for acceleration on Y axis. NOT YET PROVEN AS WORKING
+    ridSetAccelerationZ = 0x36, ///< Sets up origin point or impostor value (needed when the measurement is forced for output by \ref ridOutputValueSet but not actually supported by the sensor) for acceleration on Z axis. NOT YET PROVEN AS WORKING
+    ridSetAngularVelocityX = 0x37, ///< Sets up origin point or impostor value (needed when the measurement is forced for output by \ref ridOutputValueSet but not actually supported by the sensor) for angular velocity on X axis. NOT YET PROVEN AS WORKING
+    ridSetAngularVelocityY = 0x38, ///< Sets up origin point or impostor value (needed when the measurement is forced for output by \ref ridOutputValueSet but not actually supported by the sensor) for angular velocity on Y axis. NOT YET PROVEN AS WORKING
+    ridSetAngularVelocityZ = 0x39, ///< Sets up origin point or impostor value (needed when the measurement is forced for output by \ref ridOutputValueSet but not actually supported by the sensor) for angular velocity on Z axis. NOT YET PROVEN AS WORKING
+    ridSetMagnetometerX = 0x3A, ///< Sets up origin point or impostor value (needed when the measurement is forced for output by \ref ridOutputValueSet but not actually supported by the sensor) for magnetometer on X axis. **MAY BLOCK THE MEASUREMENTS**
+    ridSetMagnetometerY = 0x3B, ///< Sets up origin point or impostor value (needed when the measurement is forced for output by \ref ridOutputValueSet but not actually supported by the sensor) for magnetometer on Y axis. **MAY BLOCK THE MEASUREMENTS**
+    ridSetMagnetometerZ = 0x3C, ///< Sets up origin point or impostor value (needed when the measurement is forced for output by \ref ridOutputValueSet but not actually supported by the sensor) for magnetometer on Z axis. **MAY BLOCK THE MEASUREMENTS**
+    ridSetAngleRoll = 0x3D, ///< Sets up origin point or impostor value (needed when the measurement is forced for output by \ref ridOutputValueSet but not actually supported by the sensor) for Euler angle (roll) over X axis. NOT YET PROVEN AS WORKING
+    ridSetAnglePitch = 0x3E, ///< Sets up origin point or impostor value (needed when the measurement is forced for output by \ref ridOutputValueSet but not actually supported by the sensor) for Euler angle (pitch) over Y axis. NOT YET PROVEN AS WORKING
+    ridSetAngleYaw = 0x3F, ///< Sets up origin point or impostor value (needed when the measurement is forced for output by \ref ridOutputValueSet but not actually supported by the sensor) for Euler angle (yaw) over Z axis. NOT YET PROVEN AS WORKING
+    ridSetTemperature = 0x40, ///< Sets up origin point or impostor value (needed when the corresponding spatial measurement is forced for output by \ref ridOutputValueSet but not actually supported by the sensor) for temperature. NOT YET PROVEN AS WORKING
+    ridSetPortStatusD0 = 0x41, ///< Action unknown, not yet documented by Witmotion
+    ridSetPortStatusD1 = 0x42, ///< Action unknown, not yet documented by Witmotion
+    ridSetPortStatusD2 = 0x43, ///< Action unknown, not yet documented by Witmotion
+    ridSetPortStatusD3 = 0x44, ///< Action unknown, not yet documented by Witmotion
+    ridSetPressureLow = 0x45, ///< Sets up low part of initial value for 32-bit pressure measurement register. NOT YET PROVEN AS WORKING
+    ridSetPressureHigh = 0x46, ///< Sets up high part of initial value for 32-bit pressure measurement register. NOT YET PROVEN AS WORKING
+    ridSetAltitudeLow = 0x47, ///< Sets up low part of initial value for 32-bit altitude measurement register. NOT YET PROVEN AS WORKING
+    ridSetAltitudeHigh = 0x48, ///< Sets up high part of initial value for 32-bit altitude measurement register. NOT YET PROVEN AS WORKING
+    ridSetLongitudeLow = 0x49, ///< Sets up low part of initial value for 32-bit longitude measurement register. NOT YET PROVEN AS WORKING
+    ridSetLongitudeHigh = 0x4A, ///< Sets up high part of initial value for 32-bit longitude measurement register. NOT YET PROVEN AS WORKING
+    ridSetLatitudeLow = 0x4B, ///< Sets up low part of initial value for 32-bit latitude measurement register. NOT YET PROVEN AS WORKING
+    ridSetLatitudeHigh = 0x4C, ///< Sets up high part of initial value for 32-bit latitude measurement register. NOT YET PROVEN AS WORKING
+    ridSetGPSAltitude = 0x4D, ///< Sets up initial or impostor value (needed when the measurement is forced for output by \ref ridOutputValueSet but not actually supported by the sensor) for GPS altitude measurement. NOT YET PROVEN AS WORKING
+    ridSetGPSYaw = 0x4E, ///< Sets up initial or impostor value (needed when the measurement is forced for output by \ref ridOutputValueSet but not actually supported by the sensor) for GPS orientation angle measurement. NOT YET PROVEN AS WORKING
+    ridSetGPSGroundSpeedLow = 0x4F, ///< Sets up low part of initial value for 32-bit GPS ground speed measurement register. NOT YET PROVEN AS WORKING
+    ridSetGPSGroundSpeedHigh = 0x50, ///< Sets up high part of initial value for 32-bit GPS ground speed measurement register. NOT YET PROVEN AS WORKING
+    ridSetOrientationX = 0x51, ///< Sets up origin point or impostor value (needed when the measurement is forced for output by \ref ridOutputValueSet but not actually supported by the sensor) for orientation quaternion, X component. NOT YET PROVEN AS WORKING
+    ridSetOrientationY = 0x52, ///< Sets up origin point or impostor value (needed when the measurement is forced for output by \ref ridOutputValueSet but not actually supported by the sensor) for orientation quaternion, Y component. NOT YET PROVEN AS WORKING
+    ridSetOrientationZ = 0x53, ///< Sets up origin point or impostor value (needed when the measurement is forced for output by \ref ridOutputValueSet but not actually supported by the sensor) for orientation quaternion, Z component. NOT YET PROVEN AS WORKING
+    ridSetOrientationW = 0x54, ///< Sets up origin point or impostor value (needed when the measurement is forced for output by \ref ridOutputValueSet but not actually supported by the sensor) for orientation quaternion, W component. NOT YET PROVEN AS WORKING
 
-    ridGyroscopeAutoCalibrate = 0x63,
+    ridGyroscopeAutoCalibrate = 0x63, ///< Toggles on/off automatic precalibration of the gyroscope. \ref witmotion_config_packet.setting.`raw[1]` should be set to 0. `0x01` in \ref witmotion_config_packet.setting.`raw[0]` turns gyroscope automatic precalibration **OFF**. To turn it **ON** the value should be `0x00`.
 
-    ridUnlockConfiguration = 0x69
+    ridUnlockConfiguration = 0x69 ///< "Magic" vendor-defined value for configuration unlock packet `0xFF 0xAA 0x69 0x88 0xB5`.
 };
 
 /*!
@@ -250,21 +285,24 @@ struct witmotion_config_packet
     }setting; ///< 2-byte internal data storage array represented as C-style memory union. The values should be formulated byte-by-byte referring to the actual sensor's documentation.
 };
 
+/*!
+  Abstract base class to program convenience classes for the sensors that not yet supported.
+*/
 class QAbstractWitmotionSensorReader: public QObject
 {   Q_OBJECT
 protected slots:
-    virtual void ReadData() = 0;
+    virtual void ReadData() = 0; ///< Protected abstract slot to be implemented in the derived class. The common usage is as a callback for the polling timer thread.
 public slots:
-    virtual void SendConfig(const witmotion_config_packet& packet) = 0;
-    virtual void RunPoll() = 0;
+    virtual void SendConfig(const witmotion_config_packet& packet) = 0; ///< Public abstract slot to be implemented in the derived class. \param packet accepts the \ref witmotion_config_packet object for being sent to the sensor configuration registers.
+    virtual void RunPoll() = 0; ///< Public abstract slot to be implemented in the derived class. The common use is to start the polling timer thread for the sensors after Qt event loop is started.
 signals:
-    void Acquired(const witmotion_datapacket& packet);
-    void Error(const QString& description);
+    void Acquired(const witmotion_datapacket& packet); ///< Signal function to be emitted when the data packet is acquired by the polling thread or process. Can only be redefined, not overridden in the class hierarchy.
+    void Error(const QString& description); ///< Signal function to be emitted when the internal error reported in the polling thread or process. Can only be redefined, not overridden in the class hierarchy.
 };
 
 }
 
-Q_DECLARE_METATYPE(witmotion::witmotion_datapacket);
-Q_DECLARE_METATYPE(witmotion::witmotion_config_packet);
+Q_DECLARE_METATYPE(witmotion::witmotion_datapacket); ///< \private
+Q_DECLARE_METATYPE(witmotion::witmotion_config_packet); ///< \private
 
 #endif

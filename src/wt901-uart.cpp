@@ -289,7 +289,7 @@ void QWitmotionWT901Sensor::SetRTC(const QDateTime datetime)
         emit SendConfig(config_packet);
         sleep(1);
         config_packet.address_byte = ridTimeYearMonth;
-        config_packet.setting.raw[0] = static_cast<uint8_t>(datetime.date().year() - 2000);
+        config_packet.setting.raw[0] = static_cast<int8_t>(datetime.date().year() - 2000);
         config_packet.setting.raw[1] = static_cast<uint8_t>(datetime.date().month());
         emit SendConfig(config_packet);
         sleep(1);
