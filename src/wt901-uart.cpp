@@ -65,7 +65,7 @@ void QWitmotionWT901Sensor::CalibrateMagnetometer()
     config_packet.header_byte = WITMOTION_CONFIG_HEADER;
     config_packet.key_byte = WITMOTION_CONFIG_KEY;
     config_packet.address_byte = ridCalibrate;
-    config_packet.setting.raw[0] = 0x02;
+    config_packet.setting.raw[0] = 0x07;
     config_packet.setting.raw[1] = 0x00;
     ttyout << "Entering magnetic calibration, please hold the sensor in fixed position for 5 seconds" << ENDL;
     emit SendConfig(config_packet);

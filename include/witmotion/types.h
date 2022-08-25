@@ -1,3 +1,11 @@
+/*!
+    \file types.h
+    \brief Abstract types collection for Witmotion sensor library
+    \author Andrey Vukolov andrey.vukolov@elettra.eu
+
+    This header file contains all abstract types and hardware-defined constants to operate Witmotion sensor device.
+*/
+
 #ifndef WITMOTION
 #define WITMOTION
 #include <cmath>
@@ -8,14 +16,6 @@
 #include <QSerialPort>
 
 #include "witmotion/version.h"
-
-/*!
-    \file types.h
-    \brief Abstract types collection for Witmotion sensor library
-    \author Andrey Vukolov andrey.vukolov@elettra.eu
-
-    This header file contains all abstract types and hardware-defined constants to operate Witmotion sensor device.
-*/
 
 
 /*!
@@ -73,9 +73,9 @@ static const std::set<size_t> witmotion_registered_ids = {
 };
 
 /*!
-  \brief Packet ID string set to store built-in descriptions for \ref message_enumerator.
+  \brief Packet ID string set to store built-in descriptions for \ref message-enumerator.
 
-  Contains values referenced in \ref witmotion_packet_id enumeration with corresponding description strings used by \ref message_enumerator application.
+  Contains values referenced in \ref witmotion_packet_id enumeration with corresponding description strings used by \ref message-enumerator application.
 */
 static const std::map<uint8_t, std::string> witmotion_packet_descriptions = {
     {0x50, "Real Time Clock"},
@@ -121,8 +121,10 @@ enum witmotion_config_register_id
       Sets the sensor to calibration mode. The value stored in \ref witmotion_config_packet.setting.`raw[0]` determines device selection:
       - `0x00` - End calibration
       - `0x01` - Accelerometer calibration
-      - `0x02` - Magnetometer calibration
       - `0x03` - Altitude reset (only for barometric altimeter)
+      - `0x04` - Yaw [Z] Euler angle origin point reset
+      - `0x07` - Magnetometer calibration
+      - `0x08` - Angle reference reset
     */
     ridCalibrate = 0x01,
     /*!
@@ -144,10 +146,22 @@ enum witmotion_config_register_id
       Regulates output frequency. **NOTE**: the maximum available frequency is determined internally by the available bandwidth obtained from \ref ridPortBaudRate.
       The actual value stored in \ref witmotion_config_packet.setting.`raw[0]` can be determined from the following table. \ref witmotion_config_packet.setting.`raw[1]` is set to `0x00`. Also the table contains argument value for \ref witmotion_output_frequency helper function which is used by the controller applications.
 
-      |**Frequency, Hz**|0 (shutdown)|0 (single measurement)|0.1   |0.5   |1     |2     |5     |10    |20    |50    |100   |125   |200   |
-      |:----------------|:----------:|:--------------------:|:----:|:----:|:----:|:----:|:----:|:----:|:----:|:----:|:----:|:----:|:----:|
-      |**Value**        |`0x0D`      |`0x0C`                |`0x01`|`0x02`|`0x03`|`0x04`|`0x05`|`0x06`|`0x07`|`0x08`|`0x09`|`0x0A`|`0x0B`|
-      |**Argument**     | 0          | -1                   | -10  | -2   | 1    | 2    | 5    | 10   | 20   | 50   | 100  | 125  | 200  |
+      |Frequency, Hz|Value |Argument|
+      |:------------|:----:|:------:|
+      |0 (shutdown) |`0x0D`| 0      |
+      |0 (single measurement)|`0x0C`| -1 |
+      |0.1          |`0x01`| -10    |
+      |0.5          |`0x02`| -2     |
+      | 1           |`0x03`| 1      |
+      | 2           |`0x04`| 2      |
+      | 5           |`0x05`| 5      |
+      |10 (default) |`0x06`| 10     |
+      |20           |`0x07`| 20     |
+      |50           |`0x08`| 50     |
+      |100          |`0x09`| 100    |
+      |125          |`0x0A`| 125    |
+      |200          |`0x0B`| 200    |
+      |Maximal available by hardware|`0x0C`|Not supported|
     */
     ridOutputFrequency = 0x03,
     /*!
@@ -222,10 +236,50 @@ enum witmotion_config_register_id
       \note Baud rates over 256000 baud should not be considered standard.
     */
     ridGPSBaudRate = 0x1C,
+    /*!
+       Regulates internal filter bandwidth according to \ref witmotion_config_packet.setting.`raw[0]` value. Please refer to the following table for details.
+       |  Value         |Bandwidth, Hz|
+       |:--------------:|------------:|
+       |`0x00`          | 256 |
+       |`0x01`          | 184 |
+       |`0x02`          | 94 |
+       |`0x03`          | 44 |
+       |`0x04`          | 21 |
+       |`0x05`          | 10 |
+       |`0x06`          | 5  |
 
+       \ref witmotion_config_packet.setting.`raw[1]` should be set to 0. NOT YET PROVEN AS WORKING
+    */
+    ridFilterBandwidth = 0x1F,
+
+    /*!
+       Regulates gyroscope value range according to \ref witmotion_config_packet.setting.`raw[0]` value. Please refer to the following table for details.
+       |  Value         |Range, \f$ deg/s \f$|
+       |:--------------:|--------:|
+       |`0x00`          |250      |
+       |`0x01`          |500      |
+       |`0x02`          |1000     |
+       |`0x03`          |2000     |
+
+       \ref witmotion_config_packet.setting.`raw[1]` should be set to 0. NOT YET PROVEN AS WORKING
+    */
+    ridGyroscopeRange = 0x20,
+    /*!
+       Regulates accelerometer value range according to \ref witmotion_config_packet.setting.`raw[0]` value. Please refer to the following table for details.
+       |  Value         |Range, \f$ m/s^2 \f$|
+       |:--------------:|--------:|
+       |`0x00`          |\f$ 2 \cdot g\f$|
+       |`0x01`          |\f$ 4 \cdot g\f$|
+       |`0x02`          |\f$ 8 \cdot g\f$|
+       |`0x03`          |\f$ 16 \cdot g\f$|
+
+       Here \f$ g = 9.81 m/s^2 \f$. \ref witmotion_config_packet.setting.`raw[1]` should be set to 0. NOT YET PROVEN AS WORKING
+    */
+    ridAccelerometerRange = 0x21,
     ridStandbyMode = 0x22, ///< Toggles dormant mode. \ref witmotion_config_packet.setting.`raw[0]` should be set to `0x01`, \ref witmotion_config_packet.setting.`raw[1]` to 0.
     ridInstallationDirection = 0x23, ///< Toggles on/off internal rotation transform for vertical installation.  \ref witmotion_config_packet.setting.`raw[1]` should be set to 0, \ref witmotion_config_packet.setting.`raw[0]` being to `0x01` allows vertical installation, to `0x00` - horizontal installation.
     ridTransitionAlgorithm = 0x24, ///< Regulates whether 9-axis (`0x01` in \ref witmotion_config_packet.setting.`raw[0]`) or 6-axis (`0x00`) transition algorithm should be used. \ref witmotion_config_packet.setting.`raw[1]` should be set to 0.
+    ridInstructionStart = 0x2D, ///< Instruction mode. `0x00` in \ref witmotion_config_packet.setting.`raw[0]` means starting instruction mode, `0x01` toggles it off whilst \ref witmotion_config_packet.setting.`raw[1]` is set explicitly to 0.
 
     ridTimeYearMonth = 0x30, ///< Sets RTC to the given year (\ref witmotion_config_packet.setting.`raw[0]`) and month (\ref witmotion_config_packet.setting.`raw[1]`). Year is a signed 8-bit integer with zero origin point set to 2000 year Gregorian calendar. Month is digitized to 1-12, unsigned 8-bit integer.
     ridTimeDayHour = 0x31, ///< Sets RTC to the given day of the month (\ref witmotion_config_packet.setting.`raw[0]`) and hour (\ref witmotion_config_packet.setting.`raw[1]`) in 24H system.
