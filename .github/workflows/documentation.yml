@@ -5,10 +5,8 @@ jobs:
     build-docs:
         runs-on: ubuntu-latest
         steps:
-          - name: Setup cmake
-            uses: jwlawson/actions-setup-cmake@v1.13
-            with:
-                cmake-version: '3.1.x'
+          - name: Get CMake
+            uses: symbitic/install-cmake@master
           - name: Install Qt
             uses: jurplel/install-qt-action@v3
             with:
