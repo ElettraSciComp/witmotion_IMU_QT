@@ -32,4 +32,10 @@ jobs:
               cmake -DBUILD_DOCS=ON -DBUILD_EXAMPLES=OFF ..
           - name: Build documentation
             run: cd witmotion_uart/build && make doc-witmotion-uart-qt
+          - name: Upload GitHub Pages artifacts
+            uses: actions/upload-pages-artifact@v1.0.5
+            with:
+                path: witmotion_uart/build/doc
+                retention-days: 90
+
 
