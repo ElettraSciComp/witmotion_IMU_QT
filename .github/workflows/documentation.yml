@@ -15,7 +15,6 @@ jobs:
           - name: Generate CMake env
             shell: bash
             run: |
-              mkdir build
-              cd build
               cmake -DBUILD_DOCS=ON -DBUILD_EXAMPLES=OFF ..
+              make doc-witmotion-uart-qt
 
