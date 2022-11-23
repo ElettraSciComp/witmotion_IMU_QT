@@ -16,6 +16,8 @@ jobs:
             with:
                 install-deps: true
                 cache: true
+          - name: Install Doxygen
+            run: sudo apt install doxygen doxygen-latex
           - name: Checkout
             uses: actions/checkout@v3
             with:
