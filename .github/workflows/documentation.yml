@@ -1,0 +1,23 @@
+name: documentation
+on: [push, workflow_dispatch]
+
+jobs:
+    build-docs:
+        runs-on: ubuntu-latest
+        steps:
+          - name: Setup cmake
+            uses: jwlawson/actions-setup-cmake@v1.13
+            with:
+                cmake-version: '3.1.x'
+          - name: Install Qt
+            uses: jurplel/install-qt-action@v3
+            with:
+                install-deps: true
+                cache: true
+          - name: Generate CMake env
+            shell: bash
+            run: |
+              mkdir build
+              cd build
+              cmake -DBUILD_DOCS=ON -DBUILD_EXAMPLES=OFF ..
+
