@@ -1,6 +1,10 @@
 name: documentation
 on: [push, workflow_dispatch]
 
+defaults:
+  run:
+    shell: bash
+
 jobs:
     build-docs:
         runs-on: ubuntu-latest
@@ -13,8 +17,8 @@ jobs:
                 install-deps: true
                 cache: true
           - name: Generate CMake env
-            shell: bash
             run: |
+              echo -e "${CWD}"
               cmake -DBUILD_DOCS=ON -DBUILD_EXAMPLES=OFF ..
               make doc-witmotion-uart-qt
 
