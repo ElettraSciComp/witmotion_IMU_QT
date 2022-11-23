@@ -17,6 +17,8 @@ jobs:
                 install-deps: true
                 cache: true
           - name: Generate CMake env
-            run: echo -e "${CWD}"
-              
+            run: |
+              cd witmotion_IMU_QT && mkdir build && cd build
+              cmake -DBUILD_DOCS=ON -DBUILD_EXAMPLES=OFF ..
+              make doc-witmotion-uart-qt
 
