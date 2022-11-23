@@ -17,8 +17,6 @@ jobs:
                 install-deps: true
                 cache: true
           - name: Generate CMake env
-            run: |
-              echo -e "${CWD}"
-              cmake -DBUILD_DOCS=ON -DBUILD_EXAMPLES=OFF ..
-              make doc-witmotion-uart-qt
+            run: echo -e "${CWD}"
+              
 
