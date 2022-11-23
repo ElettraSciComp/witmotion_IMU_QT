@@ -340,7 +340,11 @@ struct witmotion_config_packet
 };
 
 /*!
-  Abstract base class to program convenience classes for the sensors that not yet supported.
+  \brief Abstract base class to program convenience classes for the sensors.
+
+  This class allows the developer to write handler functions for multithreaded polling timer control, sensor configuration request and data decoding event.
+  It also provides predefined signals to allow the end user to react on actual data acquisition and error occurence events.
+  The common use case for this class is to provide a base interface for the family of sensors supporting the same protocol. Please refer to \ref QBaseSerialWitmotionSensorReader class for actual implementation of the currently supported UART-based protocol.
 */
 class QAbstractWitmotionSensorReader: public QObject
 {   Q_OBJECT
