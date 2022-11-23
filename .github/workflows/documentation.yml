@@ -10,7 +10,7 @@ jobs:
         runs-on: ubuntu-latest
         steps:
           - name: Get CMake
-            uses: sssrobins/install-cmake@v1
+            uses: symbitic/install-cmake@master
           - name: Install Qt
             uses: jurplel/install-qt-action@v3
             with:
