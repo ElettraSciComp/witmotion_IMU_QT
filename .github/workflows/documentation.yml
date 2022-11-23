@@ -16,9 +16,17 @@ jobs:
             with:
                 install-deps: true
                 cache: true
+          - name: Checkout
+            uses: actions/checkout@v3
+            with:
+                repository:  ElettraSciComp/witmotion_IMU_QT
+                submodules: true
+                path: witmotion_uart
+                lfs: true
+                ref: main
           - name: Generate CMake env
             run: |
-              cd witmotion_IMU_QT && mkdir build && cd build
+              cd witmotion_uart && mkdir build && cd build
               cmake -DBUILD_DOCS=ON -DBUILD_EXAMPLES=OFF ..
               make doc-witmotion-uart-qt
 
