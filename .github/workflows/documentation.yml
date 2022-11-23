@@ -30,5 +30,6 @@ jobs:
             run: |
               cd witmotion_uart && mkdir build && cd build
               cmake -DBUILD_DOCS=ON -DBUILD_EXAMPLES=OFF ..
-              make doc-witmotion-uart-qt
+          - name: Build documentation
+            run: make doc-witmotion-uart-qt
 
