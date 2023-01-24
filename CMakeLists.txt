@@ -32,19 +32,27 @@ set(CMAKE_AUTOMOC ON)
 
 # OPTIONS
 option(BUILD_EXAMPLES "Whether build or not the set of example applications" ON)
-option(BUILD_DOCS "Whether build or not HTML documentation" OFF)
+option(BUILD_DOCS "Whether build or not HTML documentation" ON)
 
 # LIBRARY
 qt5_wrap_cpp(MOC_SOURCES
     include/witmotion/types.h
     include/witmotion/serial.h
     )
+set(LIBRARY_SHARED_HEADERS
+    include/witmotion/types.h
+    include/witmotion/util.h
+    include/witmotion/serial.h
+)
 set(LIBRARY_SOURCES
     ${MOC_SOURCES}
     src/util.cpp
     src/serial.cpp
     )
-add_library(witmotion-uart SHARED ${LIBRARY_SOURCES})
+add_library(witmotion-uart SHARED
+    ${LIBRARY_SHARED_HEADERS}
+    ${LIBRARY_SOURCES}
+)
 target_link_libraries(witmotion-uart Qt5::Core Qt5::SerialPort)
 
 qt5_wrap_cpp(MOC_ENUMERATOR
