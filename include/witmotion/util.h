@@ -1,3 +1,9 @@
+/*!
+    \file util.h
+    \brief Helper and utility functions to decode and represent the data
+    \author Andrey Vukolov andrey.vukolov@elettra.eu
+*/
+
 #ifndef WITMOTION_UTIL
 #define WITMOTION_UTIL
 #include "witmotion/types.h"
@@ -22,6 +28,19 @@ public:
     size_t& operator[](const witmotion_packet_id id);
 };
 
+/*!
+ \brief Converts the frequency value in Hertz to subsequent Witmotion opcode.
+
+ Special values for the `hertz` argument are:
+ |Value|Description|
+ |-----|-----------|
+ |`0`  | Shuts down the measurements but does not turn the device into [dormant mode](\ref ridStandbyMode) |
+ |`-1` | Orders the single-shot measurement, then shutdown |
+ |`-2` | 1 measurement in 2 seconds |
+ |`-10`| 1 measurement in 10 seconds |
+ \param hertz - frequency in Hertz, or a special value as it is described above
+ \return Witmotion opcode value as a byte, `0x06` (10 Hz) by default is the argument is inacceptable
+ */
 uint8_t witmotion_output_frequency(const int hertz);
 
 uint8_t witmotion_baud_rate(const QSerialPort::BaudRate rate);
