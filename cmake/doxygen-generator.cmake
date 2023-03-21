@@ -12,6 +12,6 @@ if(DOXYGEN_FOUND)
 	#message(STATUS "Found Doxygen. Use makefile target 'doc-${PROJECT_NAME}' to build documentation for ${PROJECT_NAME}")
 	option(DOXYGEN_DOCS_BUILD ON)
 else(DOXYGEN_FOUND)
-	message(WARNING "Unable to found Doxygen. The documentation for ${PROJECT_NAME} will not be built")
+	message(STATUS "Unable to found Doxygen. The documentation for ${PROJECT_NAME} will not be built")
 endif(DOXYGEN_FOUND)
 
