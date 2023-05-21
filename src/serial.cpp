@@ -11,18 +11,19 @@ void QBaseSerialWitmotionSensorReader::ReadData()
         return;
     qint64 bytes_read;
     qint64 bytes_avail = witmotion_port->bytesAvailable();
-    if(bytes_avail == last_avail)
+    // If no bytes available for longer than "timeout_ms" period, then raise error
+    // Ignore if timeout_ms is zero.
+    if((bytes_avail <= 0) && (timeout_ms > 0)) // either zero bytes available, or stream error (bytesAvailable == -1)
     {
-        if(++avail_rep_count > 3)
-            emit Error("No data acquired during last 3 iterations, please check the baudrate!");
-    }
-    else
-    {
-        last_avail = bytes_avail;
-        avail_rep_count = 0;
+        timeout_counter += return_interval;
+        if(timeout_counter > timeout_ms)
+        {
+            emit Error("Timed out waiting for data, please check device connection and baudrate!");
+        }
     }
     if(bytes_avail > 0)
     {
+        timeout_counter = 0;
         bytes_read = witmotion_port->read(reinterpret_cast<char*>(raw_data), 128);
         for(qint64 i = 0; i < bytes_read; i++)
         {
@@ -117,6 +118,7 @@ QBaseSerialWitmotionSensorReader::QBaseSerialWitmotionSensorReader(const QString
     validate(false),
     user_defined_return_interval(false),
     return_interval(50),
+    timeout_ms(1000),
     ttyout(stdout),
     poll_timer(nullptr),
     read_state(rsClear),
@@ -159,6 +161,7 @@ void QBaseSerialWitmotionSensorReader::RunPoll()
         poll_timer->setInterval(return_interval);
     timer_connection = connect(poll_timer, &QTimer::timeout, this, &QBaseSerialWitmotionSensorReader::ReadData);
     config_connection = connect(poll_timer, &QTimer::timeout, this, &QBaseSerialWitmotionSensorReader::Configure);
+    timeout_counter = 0;
     ttyout << "Instantiating timer at " << poll_timer->interval() << " ms" << ENDL;
     poll_timer->start();
 }
@@ -188,6 +191,11 @@ void QBaseSerialWitmotionSensorReader::SetSensorPollInterval(const uint32_t ms)
 {
     user_defined_return_interval = true;
     return_interval = ms;
+}
+
+void QBaseSerialWitmotionSensorReader::SetSensorTimeout(const uint32_t ms)
+{
+    timeout_ms = ms;
 }
 
 QAbstractWitmotionSensorController::QAbstractWitmotionSensorController(const QString tty_name, const QSerialPort::BaudRate rate):
