@@ -94,6 +94,11 @@ void QGeneralSensorController::SetInterval(uint32_t ms)
     reader->SetSensorPollInterval(ms);
 }
 
+void QGeneralSensorController::SetTimeout(uint32_t ms)
+{
+    reader->SetSensorTimeout(ms);
+}
+
 void QGeneralSensorController::Packet(const witmotion_datapacket &packet)
 {
     ++packets;

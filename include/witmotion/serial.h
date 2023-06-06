@@ -25,6 +25,9 @@ private:
     bool validate;
     bool user_defined_return_interval;
     uint32_t return_interval;
+    bool user_defined_timeout;
+    uint32_t timeout_ms;
+    uint32_t timeout_counter;
 protected:
     QTextStream ttyout;
     QTimer* poll_timer;
@@ -53,6 +56,7 @@ public:
     virtual void Suspend();
     void ValidatePackets(const bool value);
     void SetSensorPollInterval(const uint32_t ms);
+    void SetSensorTimeout(const uint32_t ms);
 };
 
 class QAbstractWitmotionSensorController: public QObject
