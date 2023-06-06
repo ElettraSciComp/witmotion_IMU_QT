@@ -25,6 +25,7 @@ private:
     bool validate;
     bool user_defined_return_interval;
     uint32_t return_interval;
+    bool user_defined_timeout;
     uint32_t timeout_ms;
     uint32_t timeout_counter;
 protected:
