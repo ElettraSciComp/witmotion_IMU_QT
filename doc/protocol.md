@@ -62,8 +62,8 @@ Here and below, \f$ V \f$ is the **measured** value obtained from the device, \f
 | Temperature | \f$ ^{\circ}C \f$ | \f$ D = \frac{V}{100} \f$ | float |
 | Quaternion component |  | \f$ D = \frac{V}{32768} \f$ | float |
 | Altimetry | \f$ m \f$ | \f$ D = \frac{V}{100} \f$ | float |
-| GPS coordinate, rough/degrees part | \f$ deg \f$ | \f$ D = \frac{V}{10^8} \f$ | double-precision float |
-| GPS coordinate, fine/minute part | \f$ min \f$ | \f$ D = \frac{V \mod 10^7}{10^5} \f$ | double-precision float |
+| GPS coordinate, rough/degrees part | \f$ deg \f$ | \f$ D = \frac{V}{10^7} \f$ | double-precision float |
+| GPS coordinate, fine/minute part | \f$ min \f$ | \f$ D = \frac{V \mod 10^7}{60^6} \f$ | double-precision float |
 | GPS altimetry | \f$ m \f$ | \f$ D = \frac{V}{10} \f$ | float |
 | GPS angular velocity | \f$ rad/s \f$ | \f$ D = \frac{V}{10} \f$ | float |
 | GPS ground speed | \f$ m/s \f$ | \f$ D = \frac{V}{10^3} \f$ | double-precision float |
