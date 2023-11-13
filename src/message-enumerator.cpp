@@ -120,6 +120,8 @@ void QGeneralSensorController::Error(const QString &description)
 
 void handle_shutdown(int s)
 {
+    // avoid compiler complains ...
+    (void) s;
     std::cout << std::endl;
     QCoreApplication::exit(0);
 }

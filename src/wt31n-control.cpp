@@ -29,7 +29,9 @@ double variance(const std::vector<float>& array)
 }
 
 void handle_shutdown(int s)
-{
+{    
+    // avoid compiler complains ...
+    (void) s;
     std::cout << std::endl;
     QCoreApplication::exit(0);
 }
