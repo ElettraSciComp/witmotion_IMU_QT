@@ -16,5 +16,9 @@ make
 ```
 
 ## Install
-Since the installation scripts are WIP, there is no installation step needed to use the library. You can use the binaries placed in `build` subdirectory after successful call of `make`.
+### `noetic`
+For ROS `noetic` distribution the package is available from the official buildfarm ,and it can be installed from APT:
+```sh
+sudo apt install witmotion_ros
+```
 
